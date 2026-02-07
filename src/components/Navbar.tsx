@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BlackHoleLogo } from './BlackHoleLogo';
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -28,13 +29,8 @@ export function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-3 group">
-          <div className="relative w-7 h-7">
-            <div className="absolute inset-0 rounded-full border border-grav/30 group-hover:border-grav/50 transition-colors animate-orbit" style={{ animationDuration: '12s' }} />
-            <div className="absolute inset-[5px] rounded-full bg-grav/20 group-hover:bg-grav/40 transition-colors" />
-            <div className="absolute inset-[8px] rounded-full bg-void" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-grav-light/80" />
-          </div>
+        <a href="#" className="flex items-center gap-2 group">
+          <BlackHoleLogo size={28} />
           <span className="font-display font-semibold text-[14px] tracking-[0.15em] text-white-90">
             RENAULT
           </span>

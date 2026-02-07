@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AdminPanel } from './AdminPanel';
+import { BlackHoleLogo } from './BlackHoleLogo';
 
 export function Footer() {
   const [adminOpen, setAdminOpen] = useState(false);
@@ -11,12 +12,8 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
             {/* Logo + tagline */}
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <div className="relative w-6 h-6">
-                  <div className="absolute inset-0 rounded-full border border-grav/20" />
-                  <div className="absolute inset-[4px] rounded-full bg-grav/15" />
-                  <div className="absolute inset-[7px] rounded-full bg-void" />
-                </div>
+              <div className="flex items-center gap-2">
+                <BlackHoleLogo size={24} />
                 <span className="font-display font-semibold text-[14px] tracking-[0.15em] text-white-50">
                   RENAULT
                 </span>
@@ -61,12 +58,6 @@ export function Footer() {
               >
                 Админ панель
               </button>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-[11px] text-white-8">
-                <span className="w-1.5 h-1.5 rounded-full bg-ok/40 animate-pulse" />
-                active
-              </span>
             </div>
           </div>
         </div>

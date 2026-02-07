@@ -78,12 +78,12 @@ export function Hero() {
         <div className="animate-fade-in-up stagger-6 mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-xl mx-auto">
           {[
             { val: downloads === null ? '—' : formatCount(downloads), label: 'Скачиваний' },
-            { val: 'Бесплатно', label: 'Навсегда' },
+            { val: 'Бесплатно', label: 'Навсегда', small: true },
             { val: '6', label: 'Функций' },
             { val: '24ч', label: 'Обновления' },
           ].map((s) => (
             <div key={s.label} className="text-center py-3 rounded-xl border border-white-4 bg-white-2">
-              <div className="font-display font-bold text-xl text-white-90">{s.val}</div>
+              <div className={`font-display font-bold text-white-90 ${'small' in s && s.small ? 'text-sm' : 'text-xl'}`}>{s.val}</div>
               <div className="mt-1 text-[11px] text-white-30 uppercase tracking-wider">{s.label}</div>
             </div>
           ))}
