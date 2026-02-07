@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getChangelog, getScript, type ChangelogEntry } from '../firebase';
+import { getChangelog, type ChangelogEntry } from '../firebase';
 
-const DEFAULT_CODE = `-- RENAULT Script\n-- Код будет добавлен в ближайшем обновлении`;
+const PLACEHOLDER = `-- RENAULT Script\n-- Код будет добавлен в ближайшем обновлении`;
 
 function highlightLua(code: string): string {
   return code
@@ -15,22 +15,20 @@ function highlightLua(code: string): string {
 }
 
 export function ScriptPreview() {
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [code, setCode] = useState(PLACEHOLDER);
   const [fileName, setFileName] = useState('renault.lua');
   const [copied, setCopied] = useState(false);
 
-  const loadLatestCode = async () => {
+  async function loadCode() {
     try {
-      // First try to get code from latest changelog version
       const changelog = await getChangelog();
       if (changelog && changelog.length > 0) {
-        // Find latest non-announce version with code
         const withCode = changelog.find(
           (v: ChangelogEntry) => v.status !== 'announce' && v.code && v.code.trim().length > 0
         );
-        if (withCode) {
-          setCode(withCode.code!);
-          if (withCode.fileName && withCode.fileName.trim() !== '') {
+        if (withCode && withCode.code) {
+          setCode(withCode.code);
+          if (withCode.fileName && withCode.fileName.trim().length > 0) {
             setFileName(withCode.fileName);
           } else {
             setFileName(`renault_${withCode.ver.replace(/\s/g, '_')}.lua`);
@@ -38,27 +36,18 @@ export function ScriptPreview() {
           return;
         }
       }
-
-      // Fallback to global script
-      const script = await getScript();
-      if (script) {
-        if (script.code) setCode(script.code);
-        if (script.name) setFileName(script.name);
-      }
+      setCode(PLACEHOLDER);
+      setFileName('renault.lua');
     } catch (e) {
       console.error('ScriptPreview load error:', e);
     }
-  };
+  }
 
   useEffect(() => {
-    loadLatestCode();
-    const handler = () => loadLatestCode();
+    loadCode();
+    const handler = () => loadCode();
     window.addEventListener('changelog-updated', handler);
-    window.addEventListener('script-updated', handler);
-    return () => {
-      window.removeEventListener('changelog-updated', handler);
-      window.removeEventListener('script-updated', handler);
-    };
+    return () => window.removeEventListener('changelog-updated', handler);
   }, []);
 
   const lines = code.split('\n');
@@ -101,9 +90,7 @@ export function ScriptPreview() {
           </p>
         </div>
 
-        {/* Code editor */}
         <div className="rounded-2xl border border-white-8 bg-void-1 overflow-hidden">
-          {/* Title bar */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-white-8">
             <div className="flex items-center gap-3">
               <div className="flex gap-1.5">
@@ -126,7 +113,6 @@ export function ScriptPreview() {
             </button>
           </div>
 
-          {/* Code body */}
           <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
             <table className="w-full">
               <tbody>
@@ -146,7 +132,6 @@ export function ScriptPreview() {
             </table>
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-between px-5 py-3 border-t border-white-8 text-[11px] font-mono text-white-15">
             <div className="flex items-center gap-4">
               <span>{lineCount} строк</span>
@@ -157,7 +142,6 @@ export function ScriptPreview() {
           </div>
         </div>
 
-        {/* Info cards */}
         <div className="grid sm:grid-cols-3 gap-4 mt-8">
           {[
             { label: 'Лицензия', value: 'MIT — свободное использование' },
