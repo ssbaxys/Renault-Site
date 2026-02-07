@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getScript, getChangelog, incrementDownloads, type ChangelogEntry } from '../firebase';
 import { BlackHoleCard } from './BlackHoleCard';
 
@@ -41,58 +41,74 @@ export function Download() {
 
   // Get downloadable versions (non-announce, with code)
   const downloadableVersions = useMemo(
-    () => versions.filter(v => v.status !== 'announce' && v.code),
+    () => versions.filter(v => v.status !== 'announce' && v.code && v.code.trim().length > 0),
     [versions]
   );
 
-  // Determine what code/name to download based on selected version
-  const currentDownload = useMemo(() => {
+  // Build download info
+  const getDownloadInfo = useCallback((): { code: string; name: string } => {
+    // If specific version selected
     if (selectedVersion !== 'latest') {
-      // Find specific version
       const found = versions.find(v => v.ver === selectedVersion);
-      if (found && found.code) {
-        return {
-          code: found.code,
-          name: found.fileName || `renault_${found.ver.replace(/\s/g, '_')}.lua`,
-        };
+      if (found && found.code && found.code.trim().length > 0) {
+        const name = (found.fileName && found.fileName.trim().length > 0)
+          ? found.fileName.trim()
+          : `renault_${found.ver.replace(/\s/g, '_')}.lua`;
+        return { code: found.code, name };
       }
     }
 
-    // Latest — find first non-announce version with code
+    // Latest — first non-announce with code
     if (downloadableVersions.length > 0) {
       const latest = downloadableVersions[0];
-      return {
-        code: latest.code!,
-        name: latest.fileName || `renault_${latest.ver.replace(/\s/g, '_')}.lua`,
-      };
+      const name = (latest.fileName && latest.fileName.trim().length > 0)
+        ? latest.fileName.trim()
+        : `renault_${latest.ver.replace(/\s/g, '_')}.lua`;
+      return { code: latest.code!, name };
     }
 
-    // Fallback to global script
+    // Fallback to global
     return { code: globalCode, name: globalName };
   }, [selectedVersion, versions, downloadableVersions, globalCode, globalName]);
+
+  // Current download info for display
+  const currentDownload = useMemo(() => getDownloadInfo(), [getDownloadInfo]);
+
+  // Use ref to always have latest download info in async callback
+  const downloadRef = useRef(currentDownload);
+  useEffect(() => {
+    downloadRef.current = currentDownload;
+  }, [currentDownload]);
 
   const fileSize = useMemo(
     () => (new Blob([currentDownload.code]).size / 1024).toFixed(1),
     [currentDownload.code]
   );
 
+  const doDownload = (code: string, fileName: string) => {
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
+
+    // Capture download info RIGHT NOW before setTimeout
+    const info = getDownloadInfo();
 
     setIsShaking(true);
     setRipple(true);
 
     setTimeout(async () => {
-      // Create blob and download using currentDownload (which uses version's fileName)
-      const blob = new Blob([currentDownload.code], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = currentDownload.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Use the captured info, not stale closure
+      doDownload(info.code, info.name);
 
       await incrementDownloads();
       window.dispatchEvent(new Event('download-count-updated'));
@@ -172,7 +188,7 @@ export function Download() {
                         <option value="latest">Последняя версия</option>
                         {downloadableVersions.map((v, i) => (
                           <option key={i} value={v.ver}>
-                            {v.ver} — {v.status.toUpperCase()} — {v.date}
+                            {v.ver} — {v.status === 'announce' ? 'АНОНС' : v.status.toUpperCase()} — {v.date}
                           </option>
                         ))}
                       </select>
