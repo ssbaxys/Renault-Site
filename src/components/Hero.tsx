@@ -1,11 +1,6 @@
-import { StarField } from './StarField';
-
 export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Star field */}
-      <StarField />
-
       {/* Subtle grid */}
       <div className="absolute inset-0 opacity-[0.012]" style={{
         backgroundImage: `linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)`,
@@ -25,7 +20,7 @@ export function Hero() {
 
         {/* Tech badges */}
         <div className="animate-fade-in-up stagger-3 mt-6 flex flex-wrap items-center justify-center gap-2">
-          {['GameGuardian', 'Lua 5.3', 'Memory Injection', 'Anti-Detect'].map((tag) => (
+          {['GameGuardian', 'Lua 5.3', 'Memory Injection'].map((tag) => (
             <span key={tag} className="px-3 py-1 text-[11px] font-mono text-white-30 rounded-full border border-white-8 bg-white-2">
               {tag}
             </span>

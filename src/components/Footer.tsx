@@ -6,7 +6,7 @@ export function Footer() {
 
   return (
     <>
-      <footer className="border-t border-white-8">
+      <footer className="relative border-t border-white-8 z-[1]">
         <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
             {/* Logo + tagline */}
@@ -65,7 +65,7 @@ export function Footer() {
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-[11px] text-white-8">
                 <span className="w-1.5 h-1.5 rounded-full bg-ok/40 animate-pulse" />
-                v3.2.0 active
+                active
               </span>
             </div>
           </div>

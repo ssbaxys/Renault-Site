@@ -1,45 +1,45 @@
 const features = [
   {
     title: 'AimBot',
-    desc: 'Интеллектуальное наведение с настраиваемым FOV, сглаживанием и предсказанием движения. Визуально неотличимо от ручной игры.',
+    desc: 'Автоматическое наведение на Nextbot\'ов и других игроков. Настраиваемый FOV, сглаживание и приоритет целей.',
     icon: '◎',
-    tags: ['FOV Control', 'Smoothing', 'Prediction'],
+    tags: ['FOV Control', 'Smoothing', 'Target Priority'],
   },
   {
     title: 'WallHack ESP',
-    desc: 'Отображение всех игроков сквозь стены — дистанция, здоровье, никнеймы, оружие и направление взгляда в реальном времени.',
+    desc: 'Отображение игроков и Nextbot\'ов сквозь стены — дистанция, никнеймы, направление движения в реальном времени.',
     icon: '◈',
-    tags: ['Box ESP', 'Skeleton', 'Distance'],
+    tags: ['Box ESP', 'Nametags', 'Distance'],
   },
   {
     title: 'Speed Hack',
-    desc: 'Управление скоростью перемещения, анимаций и стрельбы. Тонкая настройка множителя от x0.5 до x10.',
+    desc: 'Управление скоростью перемещения персонажа и транспорта. Множитель от x0.5 до x10 для полного контроля.',
     icon: '⟐',
-    tags: ['Movement', 'Fire Rate', 'Multiplier'],
+    tags: ['Movement', 'Vehicle Speed', 'Multiplier'],
   },
   {
     title: 'God Mode',
-    desc: 'Бессмертие с полным обходом серверных проверок. Бесконечное здоровье, броня и ресурсы.',
+    desc: 'Бессмертие — бесконечное здоровье при столкновениях, взрывах и атаках Nextbot\'ов. Полная неуязвимость.',
     icon: '⬡',
-    tags: ['Immortality', 'Inf Ammo', 'No Recoil'],
+    tags: ['Immortality', 'No Damage', 'Inf Health'],
   },
   {
-    title: 'Спавн предметов',
-    desc: 'Генерация любых игровых объектов — оружие, ресурсы, транспорт, уникальные предметы. Прямо в инвентарь.',
+    title: 'Спавн объектов',
+    desc: 'Генерация оружия, транспорта, пропсов и инструментов прямо на карте. Все объекты из каталога игры.',
     icon: '⊞',
-    tags: ['Weapons', 'Items', 'Vehicles'],
+    tags: ['Weapons', 'Vehicles', 'Props'],
   },
   {
-    title: 'Анти-детект',
-    desc: 'Маскировка сигнатур в памяти, рандомизация оффсетов, мимикрия под легитимные процессы. Многоуровневый обход.',
+    title: 'Физика и гравитация',
+    desc: 'Управление параметрами физического движка — гравитация, масса объектов, сила Physics Gun и скорость вертолётов.',
     icon: '⊘',
-    tags: ['Signature Mask', 'Randomize', 'Bypass'],
+    tags: ['Gravity', 'Mass Edit', 'Physics'],
   },
 ];
 
 export function Features() {
   return (
-    <section id="features" className="relative py-28">
+    <section id="features" className="relative py-28 z-[1]">
       {/* Separator */}
       <div className="section-divider max-w-6xl mx-auto mb-28" />
 
@@ -56,7 +56,7 @@ export function Features() {
             </h2>
           </div>
           <p className="text-[14px] text-white-30 max-w-sm leading-relaxed">
-            Каждая функция проходит тестирование на актуальной версии игры и обновляется в течение 24 часов после патча.
+            Каждая функция тестируется на актуальной версии и обновляется при выходе патча.
           </p>
         </div>
 
@@ -67,11 +67,9 @@ export function Features() {
               key={i}
               className="glow-card group relative p-7 rounded-2xl border border-white-8 bg-void-1 hover:bg-void-2 hover:border-white-15 transition-all duration-500"
             >
-              {/* Hover glow */}
               <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_50%_0%,rgba(124,110,245,0.04),transparent_60%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
               <div className="relative">
-                {/* Icon + Title row */}
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-2xl text-grav/40 group-hover:text-grav-light transition-colors duration-500">
                     {f.icon}
@@ -85,7 +83,6 @@ export function Features() {
                   {f.desc}
                 </p>
 
-                {/* Tags */}
                 <div className="flex flex-wrap gap-1.5">
                   {f.tags.map((tag) => (
                     <span key={tag} className="text-[10px] font-mono text-white-15 group-hover:text-white-30 px-2 py-0.5 rounded-md border border-white-4 group-hover:border-white-8 transition-all duration-500">
@@ -103,11 +100,11 @@ export function Features() {
           <div className="flex items-center gap-3">
             <span className="w-2 h-2 rounded-full bg-ok animate-pulse" />
             <span className="text-[13px] text-white-50">
-              Все функции активны и работают на текущей версии <span className="text-white-70 font-medium">Hypper Sandbox 2.1.4</span>
+              Все функции работают на <span className="text-white-70 font-medium">Hypper Sandbox 0.5.0.2</span>
             </span>
           </div>
           <span className="text-[11px] font-mono text-white-15">
-            обновлено 12.01.2025
+            VobbyGames
           </span>
         </div>
       </div>

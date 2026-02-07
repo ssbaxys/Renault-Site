@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { getScript, type ScriptData } from '../firebase';
 
-const code = `-- ═══════════════════════════════════════════
+const DEFAULT_CODE = `-- ═══════════════════════════════════════════
 -- RENAULT Script v3.2.0
 -- Target: Hypper Sandbox (com.hypper.sandbox)
 -- Engine: GameGuardian Lua Injection
@@ -74,14 +75,14 @@ function godMode()
   gg.toast(TAG.." God Mode ON")
 end
 
-function spawnItems()
+function spawnObjects()
   local items = gg.choice({
     "AK-47", "M4A1", "AWP", "RPG",
-    "Мед. набор x10", "Броня x5",
-    "Транспорт", "Все предметы"
-  }, nil, TAG.." Спавн предметов")
+    "Physics Gun", "Tool Gun",
+    "Транспорт", "Вертолёт"
+  }, nil, TAG.." Спавн объектов")
   if items == nil then return end
-  gg.toast(TAG.." Предмет заспавнен")
+  gg.toast(TAG.." Объект заспавнен")
 end
 
 function updateOffsets()
@@ -97,7 +98,7 @@ function showMenu()
     "◈  WallHack ESP",
     "⟐  Speed Hack",
     "⬡  God Mode",
-    "⊞  Спавн предметов",
+    "⊞  Спавн объектов",
     "↻  Обновить оффсеты",
     "✕  Выход"
   }, nil, "RENAULT v"..VER)
@@ -106,7 +107,7 @@ function showMenu()
   elseif m == 2 then toggleESP()
   elseif m == 3 then speedHack()
   elseif m == 4 then godMode()
-  elseif m == 5 then spawnItems()
+  elseif m == 5 then spawnObjects()
   elseif m == 6 then updateOffsets()
   elseif m == 7 then
     gg.setSpeed(1)
@@ -128,15 +129,15 @@ while true do
   gg.sleep(100)
 end`;
 
+const DEFAULT_NAME = 'renault_v3.2.lua';
+
 function highlightLua(line: string): React.JSX.Element {
-  // Comments
   if (line.trimStart().startsWith('--')) {
     return <span className="text-white-15 italic">{line}</span>;
   }
 
   const parts: React.JSX.Element[] = [];
-  // Tokenize
-  const tokens = line.split(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\b\d+\.?\d*\b|\b(?:local|function|if|then|elseif|else|end|while|do|return|true|false|nil|for|in|ipairs|not|and|or)\b|\bgg\b|\.\.|[(){}[\],.;=+\-*/<>~#]|\s+)/g);
+  const tokens = line.split(/(\"(?:[^\"\\]|\\.)*\"|'(?:[^'\\]|\\.)*'|\b\d+\.?\d*\b|\b(?:local|function|if|then|elseif|else|end|while|do|return|true|false|nil|for|in|ipairs|not|and|or)\b|\bgg\b|\.\.|[(){}[\],.;=+\-*/<>~#]|\s+)/g);
 
   let key = 0;
   tokens.forEach((token) => {
@@ -162,18 +163,41 @@ function highlightLua(line: string): React.JSX.Element {
   return <>{parts}</>;
 }
 
+function calcSize(text: string): string {
+  const bytes = new Blob([text]).size;
+  if (bytes < 1024) return `${bytes} B`;
+  return `~${(bytes / 1024).toFixed(1)} KB`;
+}
+
 export function ScriptPreview() {
   const [copied, setCopied] = useState(false);
-  const lines = code.split('\n');
+  const [scriptData, setScriptData] = useState<ScriptData>({ name: DEFAULT_NAME, code: DEFAULT_CODE });
+
+  const loadScript = useCallback(async () => {
+    const data = await getScript();
+    if (data && data.code) {
+      setScriptData(data);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadScript();
+    const handler = () => { loadScript(); };
+    window.addEventListener('script-updated', handler);
+    return () => window.removeEventListener('script-updated', handler);
+  }, [loadScript]);
+
+  const lines = scriptData.code.split('\n');
+  const fileSize = calcSize(scriptData.code);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(scriptData.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
   return (
-    <section id="code" className="relative py-28">
+    <section id="code" className="relative py-28 z-[1]">
       <div className="section-divider max-w-6xl mx-auto mb-28" />
 
       <div className="max-w-6xl mx-auto px-6">
@@ -203,7 +227,7 @@ export function ScriptPreview() {
                 <div className="w-2.5 h-2.5 rounded-full bg-ok/30" />
               </div>
               <span className="text-[12px] font-mono text-white-30">
-                renault_v3.2.lua
+                {scriptData.name}
               </span>
               <span className="text-[10px] font-mono text-white-15 px-2 py-0.5 rounded bg-white-4">
                 Lua 5.3
@@ -241,7 +265,7 @@ export function ScriptPreview() {
               {lines.length} строк · UTF-8
             </span>
             <span className="text-[11px] font-mono text-white-15">
-              ~4.2 KB
+              {fileSize}
             </span>
           </div>
         </div>

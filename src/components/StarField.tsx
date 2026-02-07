@@ -23,35 +23,47 @@ export function StarField() {
     }
 
     const stars: Star[] = [];
-    const COUNT = 120;
+    const COUNT = 90;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio, 2);
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      ctx.scale(dpr, dpr);
+      const parent = canvas.parentElement;
+      const w = parent ? parent.clientWidth : window.innerWidth;
+      const h = parent ? parent.clientHeight : document.documentElement.scrollHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-    resize();
-    window.addEventListener('resize', resize);
 
-    for (let i = 0; i < COUNT; i++) {
-      stars.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.15,
-        size: 0.5 + Math.random() * 1.5,
-        opacity: 0.1 + Math.random() * 0.5,
-        twinkleSpeed: 0.005 + Math.random() * 0.02,
-        twinkleOffset: Math.random() * Math.PI * 2,
-      });
-    }
+    const init = () => {
+      resize();
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      stars.length = 0;
+      for (let i = 0; i < COUNT; i++) {
+        stars.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.12,
+          vy: (Math.random() - 0.5) * 0.12,
+          size: 0.4 + Math.random() * 1.2,
+          opacity: 0.08 + Math.random() * 0.35,
+          twinkleSpeed: 0.003 + Math.random() * 0.015,
+          twinkleOffset: Math.random() * Math.PI * 2,
+        });
+      }
+    };
+
+    init();
+    window.addEventListener('resize', init);
 
     let time = 0;
 
     const draw = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
       ctx.clearRect(0, 0, w, h);
       time += 1;
 
@@ -79,15 +91,15 @@ export function StarField() {
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
+      window.removeEventListener('resize', init);
     };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
-      style={{ opacity: 0.6 }}
+      className="fixed inset-0 w-full h-full pointer-events-none"
+      style={{ opacity: 0.5, zIndex: 0 }}
     />
   );
 }
