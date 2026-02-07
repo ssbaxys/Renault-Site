@@ -138,6 +138,37 @@ body {
   50% { box-shadow: 0 0 30px rgba(124,110,245,0.2), 0 0 80px rgba(124,110,245,0.1); }
 }
 
+@keyframes twinkle {
+  0%, 100% { opacity: var(--tw-opacity, 0.3); transform: scale(1); }
+  50% { opacity: calc(var(--tw-opacity, 0.3) * 0.3); transform: scale(0.6); }
+}
+
+@keyframes morph {
+  0%, 100% { border-radius: 42% 58% 62% 38% / 46% 52% 48% 54%; }
+  25% { border-radius: 56% 44% 36% 64% / 60% 38% 62% 40%; }
+  50% { border-radius: 38% 62% 54% 46% / 44% 56% 40% 60%; }
+  75% { border-radius: 64% 36% 48% 52% / 52% 44% 58% 42%; }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-slow-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes dash-move {
+  to { stroke-dashoffset: -100; }
+}
+
+.animate-twinkle { animation: twinkle var(--anim-duration, 4s) ease-in-out var(--anim-delay, 0s) infinite; }
+.animate-morph { animation: morph 12s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 30s linear infinite; }
+.animate-spin-slow-reverse { animation: spin-slow-reverse 24s linear infinite; }
+
 @keyframes particle-drift {
   0% { transform: translate(0, 0); opacity: 0; }
   10% { opacity: 1; }
@@ -148,6 +179,33 @@ body {
 @keyframes count-up {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes screen-shake {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-2px, 1px); }
+  20% { transform: translate(3px, -1px); }
+  30% { transform: translate(-1px, 2px); }
+  40% { transform: translate(2px, -2px); }
+  50% { transform: translate(-3px, 1px); }
+  60% { transform: translate(1px, -1px); }
+  70% { transform: translate(-2px, 2px); }
+  80% { transform: translate(3px, 0px); }
+  90% { transform: translate(-1px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes download-ripple {
+  0% { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(200); opacity: 0; }
+}
+
+.animate-screen-shake {
+  animation: screen-shake 0.5s ease-in-out;
+}
+
+.animate-download-ripple {
+  animation: download-ripple 1s ease-out forwards;
 }
 
 .animate-orbit { animation: orbit 60s linear infinite; }
