@@ -42,6 +42,7 @@ export function AdminPanel({ open, onClose }: Props) {
   const [changes, setChanges] = useState<{ type: 'new' | 'fix' | 'upd'; text: string }[]>([
     { type: 'new', text: '' },
   ]);
+  const [versionCode, setVersionCode] = useState('');
 
   // Script state
   const [scriptName, setScriptName] = useState('renault_v3.2.lua');
@@ -77,6 +78,7 @@ export function AdminPanel({ open, onClose }: Props) {
     setDate('');
     setStatus('release');
     setChanges([{ type: 'new', text: '' }]);
+    setVersionCode('');
     setEditing(null);
   };
 
@@ -89,31 +91,30 @@ export function AdminPanel({ open, onClose }: Props) {
     }
   };
 
-  // Changelog handlers
   const handleAddChange = () => {
     setChanges([...changes, { type: 'new', text: '' }]);
   };
 
   const handleRemoveChange = (idx: number) => {
     if (changes.length <= 1) return;
-    setChanges(changes.filter((_: { type: string; text: string }, i: number) => i !== idx));
+    setChanges(changes.filter((_, i) => i !== idx));
   };
 
   const handleChangeType = (idx: number, type: 'new' | 'fix' | 'upd') => {
     const updated = [...changes];
-    updated[idx].type = type;
+    updated[idx] = { ...updated[idx], type };
     setChanges(updated);
   };
 
   const handleChangeText = (idx: number, text: string) => {
     const updated = [...changes];
-    updated[idx].text = text;
+    updated[idx] = { ...updated[idx], text };
     setChanges(updated);
   };
 
   const handlePublish = async () => {
     if (!ver.trim() || !date.trim()) return;
-    const validChanges = changes.filter((c: { type: string; text: string }) => c.text.trim());
+    const validChanges = changes.filter(c => c.text.trim());
     if (validChanges.length === 0) return;
 
     setSaving(true);
@@ -123,6 +124,11 @@ export function AdminPanel({ open, onClose }: Props) {
       status,
       changes: validChanges,
     };
+
+    // Attach code to version if provided
+    if (versionCode.trim()) {
+      newEntry.code = versionCode.trim();
+    }
 
     let updated: ChangelogEntry[];
     if (editing !== null) {
@@ -144,20 +150,20 @@ export function AdminPanel({ open, onClose }: Props) {
     setVer(e.ver);
     setDate(e.date);
     setStatus(e.status);
-    setChanges(e.changes.map((c: { type: string; text: string }) => ({ ...c })) as { type: 'new' | 'fix' | 'upd'; text: string }[]);
+    setChanges(e.changes.map(c => ({ ...c })) as { type: 'new' | 'fix' | 'upd'; text: string }[]);
+    setVersionCode(e.code || '');
     setEditing(idx);
   };
 
   const handleDelete = async (idx: number) => {
     setSaving(true);
-    const updated = entries.filter((_: ChangelogEntry, i: number) => i !== idx);
+    const updated = entries.filter((_, i) => i !== idx);
     await saveChangelog(updated);
     setEntries(updated);
     window.dispatchEvent(new Event('changelog-updated'));
     setSaving(false);
   };
 
-  // Script handlers
   const handleSaveScript = async () => {
     if (!scriptName.trim() || !scriptCode.trim()) return;
     setSaving(true);
@@ -166,6 +172,8 @@ export function AdminPanel({ open, onClose }: Props) {
     setSaving(false);
   };
 
+  const vCodeLines = versionCode.split('\n').length;
+  const vCodeSize = versionCode ? `~${(new Blob([versionCode]).size / 1024).toFixed(1)} KB` : '0 B';
   const scriptLines = scriptCode.split('\n').length;
   const scriptSize = scriptCode ? `~${(new Blob([scriptCode]).size / 1024).toFixed(1)} KB` : '0 B';
 
@@ -291,7 +299,7 @@ export function AdminPanel({ open, onClose }: Props) {
 
                     <label className="block text-[11px] font-mono text-white-15 mb-2">Изменения</label>
                     <div className="space-y-2 mb-4">
-                      {changes.map((c: { type: string; text: string }, ci: number) => (
+                      {changes.map((c, ci) => (
                         <div key={ci} className="flex items-center gap-2">
                           <div className="flex gap-0.5 shrink-0">
                             {(['new', 'fix', 'upd'] as const).map((t) => (
@@ -326,6 +334,28 @@ export function AdminPanel({ open, onClose }: Props) {
                       ))}
                     </div>
 
+                    {/* Code for this version */}
+                    <div className="mb-4">
+                      <label className="block text-[11px] font-mono text-white-15 mb-1.5">
+                        Код скрипта для этой версии <span className="text-white-8">(опционально)</span>
+                      </label>
+                      <textarea
+                        value={versionCode}
+                        onChange={(e) => setVersionCode(e.target.value)}
+                        placeholder="-- Вставьте код скрипта для этой версии..."
+                        rows={10}
+                        className="w-full px-3 py-2.5 rounded-lg bg-void border border-white-8 text-[12px] text-white-90 font-mono placeholder:text-white-15 outline-none focus:border-grav/40 transition-colors resize-y leading-relaxed"
+                        spellCheck={false}
+                      />
+                      {versionCode.trim() && (
+                        <div className="flex items-center gap-3 mt-1.5 text-[10px] font-mono text-white-15">
+                          <span>{vCodeLines} строк</span>
+                          <span>·</span>
+                          <span>{vCodeSize}</span>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex items-center gap-3 flex-wrap">
                       <button onClick={handleAddChange}
                         className="px-4 py-2 rounded-lg border border-white-8 text-[12px] text-white-30 hover:text-white-50 hover:border-white-15 transition-all">
@@ -352,7 +382,7 @@ export function AdminPanel({ open, onClose }: Props) {
                         Опубликованные версии ({entries.length})
                       </p>
                       <div className="space-y-3">
-                        {entries.map((e: ChangelogEntry, ei: number) => (
+                        {entries.map((e, ei) => (
                           <div key={ei} className="rounded-xl border border-white-8 bg-void-3 p-4">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -362,6 +392,11 @@ export function AdminPanel({ open, onClose }: Props) {
                                 }`}>
                                   {e.status === 'announce' ? 'АНОНС' : e.status.toUpperCase()}
                                 </span>
+                                {e.code && (
+                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-grav/20 text-grav-light/50 bg-grav/5">
+                                    КОД
+                                  </span>
+                                )}
                                 <span className="text-[11px] text-white-15">{e.date}</span>
                               </div>
                               <div className="flex items-center gap-1">
@@ -376,7 +411,7 @@ export function AdminPanel({ open, onClose }: Props) {
                               </div>
                             </div>
                             <div className="space-y-1">
-                              {e.changes.map((c: { type: string; text: string }, ci: number) => (
+                              {e.changes.map((c, ci) => (
                                 <div key={ci} className="flex items-center gap-2 text-[12px]">
                                   <span className={`font-mono text-[9px] px-1 py-0.5 rounded border ${
                                     c.type === 'new' ? 'text-ok/50 bg-ok/5 border-ok/10'
@@ -399,8 +434,11 @@ export function AdminPanel({ open, onClose }: Props) {
                 /* Script editor tab */
                 <div>
                   <div className="rounded-xl border border-white-8 bg-void-3 p-5">
-                    <p className="text-[13px] font-display font-semibold text-white-70 mb-5">
-                      Редактор скрипта
+                    <p className="text-[13px] font-display font-semibold text-white-70 mb-1">
+                      Глобальный скрипт
+                    </p>
+                    <p className="text-[11px] text-white-15 mb-5">
+                      Используется если у версии нет привязанного кода
                     </p>
 
                     <div className="mb-4">
@@ -424,7 +462,6 @@ export function AdminPanel({ open, onClose }: Props) {
                       />
                     </div>
 
-                    {/* Auto stats */}
                     <div className="flex flex-wrap items-center gap-4 mb-5 text-[11px] font-mono text-white-15">
                       <span>{scriptLines} строк</span>
                       <span>·</span>

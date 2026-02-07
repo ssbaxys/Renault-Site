@@ -20,6 +20,7 @@ export interface ChangelogEntry {
   date: string;
   status: 'dev' | 'alpha' | 'beta' | 'release' | 'announce';
   changes: { type: 'new' | 'fix' | 'upd'; text: string }[];
+  code?: string;
 }
 
 export interface ScriptData {

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getChangelog as fetchChangelog, type ChangelogEntry } from '../firebase';
+import { getChangelog as fetchChangelog, incrementDownloads, type ChangelogEntry } from '../firebase';
 
 const typeColors: Record<string, string> = {
   new: 'text-ok/60 bg-ok/5 border-ok/10',
@@ -32,6 +32,7 @@ const statusLabels: Record<string, string> = {
 export function Changelog() {
   const [versions, setVersions] = useState<ChangelogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingIdx, setDownloadingIdx] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,9 +49,25 @@ export function Changelog() {
   }, [load]);
 
   const isEmpty = versions.length === 0;
-
-  // Find index of latest non-announce version
   const latestNonAnnounceIdx = versions.findIndex(v => v.status !== 'announce');
+
+  const handleDownloadVersion = async (entry: ChangelogEntry, idx: number) => {
+    if (!entry.code) return;
+    setDownloadingIdx(idx);
+
+    const blob = new Blob([entry.code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `renault_${entry.ver.replace(/\s/g, '_')}.lua`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    await incrementDownloads();
+    window.dispatchEvent(new Event('download-count-updated'));
+
+    setTimeout(() => setDownloadingIdx(null), 2000);
+  };
 
   return (
     <section id="changelog" className="relative py-28 z-[1]">
@@ -92,6 +109,8 @@ export function Changelog() {
               {versions.map((v, vi) => {
                 const isLatest = vi === latestNonAnnounceIdx && v.status !== 'announce';
                 const isAnnounce = v.status === 'announce';
+                const hasCode = !!v.code;
+                const isDownloading = downloadingIdx === vi;
 
                 return (
                   <div key={vi} className={`relative pl-8 md:pl-10 ${isAnnounce ? 'opacity-80' : ''}`}>
@@ -116,6 +135,35 @@ export function Changelog() {
                         </span>
                       )}
                       <span className="text-[12px] text-white-15">{v.date}</span>
+
+                      {/* Download button for this version */}
+                      {hasCode && !isAnnounce && (
+                        <button
+                          onClick={() => handleDownloadVersion(v, vi)}
+                          disabled={isDownloading}
+                          className={`ml-auto flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-mono border transition-all ${
+                            isDownloading
+                              ? 'border-ok/20 text-ok/60 bg-ok/5'
+                              : 'border-white-8 text-white-30 hover:text-white-70 hover:border-white-15 hover:bg-white-4'
+                          }`}
+                        >
+                          {isDownloading ? (
+                            <>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                              Скачано
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4" />
+                              </svg>
+                              Скачать .lua
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     <div className="space-y-2">

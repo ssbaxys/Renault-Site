@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getScript, type ScriptData } from '../firebase';
+import { getScript, getChangelog, type ScriptData, type ChangelogEntry } from '../firebase';
 
 const DEFAULT_CODE = `-- ═══════════════════════════════════════════
 -- RENAULT Script v3.2.0
@@ -174,6 +174,20 @@ export function ScriptPreview() {
   const [scriptData, setScriptData] = useState<ScriptData>({ name: DEFAULT_NAME, code: DEFAULT_CODE });
 
   const loadScript = useCallback(async () => {
+    // First try to get code from latest changelog version
+    const changelog = await getChangelog();
+    if (changelog && changelog.length > 0) {
+      const latestWithCode = changelog.find((v: ChangelogEntry) => v.status !== 'announce' && v.code);
+      if (latestWithCode && latestWithCode.code) {
+        setScriptData({
+          name: `renault_${latestWithCode.ver.replace(/\s/g, '_')}.lua`,
+          code: latestWithCode.code,
+        });
+        return;
+      }
+    }
+
+    // Fallback to global script
     const data = await getScript();
     if (data && data.code) {
       setScriptData(data);
@@ -182,9 +196,14 @@ export function ScriptPreview() {
 
   useEffect(() => {
     loadScript();
-    const handler = () => { loadScript(); };
-    window.addEventListener('script-updated', handler);
-    return () => window.removeEventListener('script-updated', handler);
+    const h1 = () => { loadScript(); };
+    const h2 = () => { loadScript(); };
+    window.addEventListener('script-updated', h1);
+    window.addEventListener('changelog-updated', h2);
+    return () => {
+      window.removeEventListener('script-updated', h1);
+      window.removeEventListener('changelog-updated', h2);
+    };
   }, [loadScript]);
 
   const lines = scriptData.code.split('\n');
@@ -278,7 +297,7 @@ export function ScriptPreview() {
           </div>
           <div className="p-4 rounded-xl border border-white-8 bg-void-1">
             <div className="text-[11px] font-mono text-grav-light/50 mb-1">Лицензия</div>
-            <div className="text-[14px] text-white-70">Полностью свободная, без ограничений</div>
+            <div className="text-[14px] text-white-70">MIT — свободное использование</div>
           </div>
           <div className="p-4 rounded-xl border border-white-8 bg-void-1">
             <div className="text-[11px] font-mono text-grav-light/50 mb-1">Обновление</div>
