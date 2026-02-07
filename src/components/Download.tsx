@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getScript, getChangelog, incrementDownloads, type ChangelogEntry } from '../firebase';
 import { BlackHoleCard } from './BlackHoleCard';
 
@@ -10,9 +10,11 @@ export function Download() {
   const [globalCode, setGlobalCode] = useState(DEFAULT_CODE);
   const [globalFileName, setGlobalFileName] = useState(DEFAULT_FILENAME);
   const [selectedVersion, setSelectedVersion] = useState('latest');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [ripple, setRipple] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const loadData = async () => {
     try {
@@ -43,44 +45,45 @@ export function Download() {
     };
   }, []);
 
-  // Simple function: get all versions that have code and are not announcements
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
   function getDownloadableVersions(): ChangelogEntry[] {
     return versions.filter(v => v.status !== 'announce' && v.code && v.code.trim().length > 0);
   }
 
-  // Simple function: resolve what to download RIGHT NOW
   function resolveDownload(): { code: string; fileName: string } {
     const downloadable = getDownloadableVersions();
 
     if (selectedVersion !== 'latest') {
-      // Find specific version
       const found = downloadable.find(v => v.ver === selectedVersion);
-      if (found) {
-        return {
-          code: found.code!,
-          fileName: found.fileName && found.fileName.trim() !== ''
-            ? found.fileName
-            : `renault_${found.ver.replace(/\s/g, '_')}.lua`,
-        };
+      if (found && found.code) {
+        const name = (found.fileName && found.fileName.trim() !== '')
+          ? found.fileName
+          : `renault_${found.ver.replace(/\s/g, '_')}.lua`;
+        return { code: found.code, fileName: name };
       }
     }
 
-    // Latest version (first downloadable)
     if (downloadable.length > 0) {
       const latest = downloadable[0];
-      return {
-        code: latest.code!,
-        fileName: latest.fileName && latest.fileName.trim() !== ''
-          ? latest.fileName
-          : `renault_${latest.ver.replace(/\s/g, '_')}.lua`,
-      };
+      const name = (latest.fileName && latest.fileName.trim() !== '')
+        ? latest.fileName
+        : `renault_${latest.ver.replace(/\s/g, '_')}.lua`;
+      return { code: latest.code!, fileName: name };
     }
 
-    // Fallback to global script
     return { code: globalCode, fileName: globalFileName };
   }
 
-  // Direct download function - no wrappers
   function triggerDownload(code: string, fileName: string) {
     const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -95,18 +98,12 @@ export function Download() {
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
-
-    // Resolve what to download RIGHT HERE, RIGHT NOW
     const { code, fileName } = resolveDownload();
-
-    // Log for debugging
-    console.log('[Download] fileName:', fileName, '| codeLength:', code.length, '| selectedVersion:', selectedVersion);
 
     setIsShaking(true);
     setRipple(true);
 
     setTimeout(async () => {
-      // Actually download with the resolved values
       triggerDownload(code, fileName);
 
       try {
@@ -129,14 +126,33 @@ export function Download() {
     }, 600);
   };
 
-  // Current display info
+  const selectVersion = (ver: string) => {
+    setSelectedVersion(ver);
+    setDropdownOpen(false);
+  };
+
+  const downloadable = getDownloadableVersions();
   const currentInfo = resolveDownload();
   const fileSize = (new Blob([currentInfo.code]).size / 1024).toFixed(1);
-  const downloadable = getDownloadableVersions();
+
+  // Get label for selected version
+  const getSelectedLabel = () => {
+    if (selectedVersion === 'latest') return 'Последняя версия';
+    const found = downloadable.find(v => v.ver === selectedVersion);
+    if (found) return `${found.ver} — ${found.status.toUpperCase()} — ${found.date}`;
+    return 'Последняя версия';
+  };
+
+  const statusColor: Record<string, string> = {
+    dev: 'text-orange-400',
+    alpha: 'text-red-400',
+    beta: 'text-amber-400',
+    release: 'text-emerald-400',
+    announce: 'text-sky-400',
+  };
 
   return (
     <>
-      {/* Screen shake overlay */}
       <div
         className={`fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-300 ${
           isShaking ? 'opacity-100' : 'opacity-0'
@@ -146,7 +162,6 @@ export function Download() {
         }}
       />
 
-      {/* Ripple flash */}
       {ripple && (
         <div className="fixed inset-0 z-[9998] pointer-events-none flex items-center justify-center">
           <div className="w-4 h-4 rounded-full bg-grav/30 animate-download-ripple" />
@@ -163,10 +178,8 @@ export function Download() {
             <div className="relative p-10 md:p-16">
               <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
 
-                {/* Black Hole visual */}
                 <BlackHoleCard />
 
-                {/* Content */}
                 <div className="flex-1 text-center lg:text-left">
                   <p className="text-[12px] font-mono text-grav-light tracking-[0.2em] uppercase mb-4">
                     // Скачать
@@ -179,27 +192,55 @@ export function Download() {
                     Один клик — файл на устройстве.
                   </p>
 
-                  {/* Version selector */}
+                  {/* Custom dropdown */}
                   {downloadable.length > 0 && (
-                    <div className="mb-6">
+                    <div className="mb-6 relative" ref={dropdownRef}>
                       <label className="block text-[11px] font-mono text-white-15 mb-2">Версия</label>
-                      <select
-                        value={selectedVersion}
-                        onChange={(e) => setSelectedVersion(e.target.value)}
-                        className="w-full max-w-xs px-4 py-2.5 rounded-xl bg-void-2 border border-white-8 text-[13px] text-white-70 font-mono outline-none focus:border-grav/40 transition-colors cursor-pointer appearance-none"
-                        style={{
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
-                          backgroundRepeat: 'no-repeat',
-                          backgroundPosition: 'right 12px center',
-                        }}
+                      <button
+                        type="button"
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                        className="w-full max-w-xs px-4 py-2.5 rounded-xl bg-void-2 border border-white-8 text-[13px] text-white-70 font-mono outline-none hover:border-grav/40 transition-colors cursor-pointer text-left flex items-center justify-between gap-2"
                       >
-                        <option value="latest">Последняя версия</option>
-                        {downloadable.map((v, i) => (
-                          <option key={i} value={v.ver}>
-                            {v.ver} — {v.status.toUpperCase()} — {v.date}
-                          </option>
-                        ))}
-                      </select>
+                        <span className="truncate">{getSelectedLabel()}</span>
+                        <svg
+                          className={`w-4 h-4 text-white-30 transition-transform flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {dropdownOpen && (
+                        <div className="absolute top-full left-0 mt-2 w-full max-w-xs bg-void-2 border border-white-8 rounded-xl overflow-hidden z-50 shadow-2xl shadow-black/50">
+                          <button
+                            type="button"
+                            onClick={() => selectVersion('latest')}
+                            className={`w-full px-4 py-3 text-left text-[13px] font-mono transition-colors hover:bg-white/5 flex items-center gap-2 ${
+                              selectedVersion === 'latest' ? 'text-grav bg-grav/5' : 'text-white-70'
+                            }`}
+                          >
+                            {selectedVersion === 'latest' && <span className="w-1.5 h-1.5 rounded-full bg-grav flex-shrink-0" />}
+                            Последняя версия
+                          </button>
+                          {downloadable.map((v, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => selectVersion(v.ver)}
+                              className={`w-full px-4 py-3 text-left text-[13px] font-mono transition-colors hover:bg-white/5 border-t border-white-5 flex items-center gap-2 ${
+                                selectedVersion === v.ver ? 'text-grav bg-grav/5' : 'text-white-70'
+                              }`}
+                            >
+                              {selectedVersion === v.ver && <span className="w-1.5 h-1.5 rounded-full bg-grav flex-shrink-0" />}
+                              <span>{v.ver}</span>
+                              <span className={`text-[10px] uppercase ${statusColor[v.status] || 'text-white-30'}`}>
+                                {v.status}
+                              </span>
+                              <span className="text-white-15 ml-auto text-[11px]">{v.date}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
