@@ -1,4 +1,24 @@
+import { useState, useEffect } from 'react';
+import { getDownloadCount } from '../firebase';
+
+function formatCount(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return n.toString();
+}
+
 export function Hero() {
+  const [downloads, setDownloads] = useState<number | null>(null);
+
+  useEffect(() => {
+    getDownloadCount().then(setDownloads);
+
+    const handler = () => {
+      getDownloadCount().then(setDownloads);
+    };
+    window.addEventListener('download-count-updated', handler);
+    return () => window.removeEventListener('download-count-updated', handler);
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Subtle grid */}
@@ -57,7 +77,7 @@ export function Hero() {
         {/* Stats row */}
         <div className="animate-fade-in-up stagger-6 mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-xl mx-auto">
           {[
-            { val: '15K+', label: 'Скачиваний' },
+            { val: downloads === null ? '—' : formatCount(downloads), label: 'Скачиваний' },
             { val: 'Бесплатно', label: 'Навсегда' },
             { val: '6', label: 'Функций' },
             { val: '24ч', label: 'Обновления' },

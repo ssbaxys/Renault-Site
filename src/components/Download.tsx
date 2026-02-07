@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getScript } from '../firebase';
+import { getScript, incrementDownloads } from '../firebase';
 import { BlackHoleCard } from './BlackHoleCard';
 
 const DEFAULT_SCRIPT = `-- RENAULT Script v3.2.0\ngg.setVisible(false)`;
@@ -27,15 +27,15 @@ export function Download() {
     return () => window.removeEventListener('script-updated', handler);
   }, [load]);
 
-  const handleDownload = (e: React.MouseEvent) => {
+  const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
 
     // Start shake
     setIsShaking(true);
     setRipple(true);
 
-    // After shake, download file
-    setTimeout(() => {
+    // After shake, download file and increment counter
+    setTimeout(async () => {
       const blob = new Blob([scriptCode], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -43,6 +43,11 @@ export function Download() {
       a.download = scriptName;
       a.click();
       URL.revokeObjectURL(url);
+
+      // Increment download counter in Firebase
+      await incrementDownloads();
+      // Notify Hero to update the count
+      window.dispatchEvent(new Event('download-count-updated'));
 
       setDownloaded(true);
       

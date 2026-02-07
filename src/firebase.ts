@@ -29,6 +29,7 @@ export interface ScriptData {
 
 const CHANGELOG_REF = 'renault/changelog';
 const SCRIPT_REF = 'renault/script';
+const DOWNLOADS_REF = 'renault/downloads';
 
 export async function getChangelog(): Promise<ChangelogEntry[]> {
   try {
@@ -68,4 +69,28 @@ export async function saveScript(data: ScriptData): Promise<void> {
   } catch (e) {
     console.error('Firebase write error:', e);
   }
+}
+
+export async function getDownloadCount(): Promise<number> {
+  try {
+    const snapshot = await get(ref(db, DOWNLOADS_REF));
+    if (snapshot.exists()) {
+      return snapshot.val() as number;
+    }
+  } catch (e) {
+    console.error('Firebase read error:', e);
+  }
+  return 0;
+}
+
+export async function incrementDownloads(): Promise<number> {
+  try {
+    const current = await getDownloadCount();
+    const newCount = current + 1;
+    await set(ref(db, DOWNLOADS_REF), newCount);
+    return newCount;
+  } catch (e) {
+    console.error('Firebase write error:', e);
+  }
+  return 0;
 }
