@@ -21,6 +21,7 @@ export interface ChangelogEntry {
   status: 'dev' | 'alpha' | 'beta' | 'release' | 'announce';
   changes: { type: 'new' | 'fix' | 'upd'; text: string }[];
   code?: string;
+  fileName?: string;
 }
 
 export interface ScriptData {

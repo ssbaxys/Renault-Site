@@ -59,7 +59,7 @@ export function Changelog() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `renault_${entry.ver.replace(/\s/g, '_')}.lua`;
+    a.download = entry.fileName || `renault_${entry.ver.replace(/\s/g, '_')}.lua`;
     a.click();
     URL.revokeObjectURL(url);
 

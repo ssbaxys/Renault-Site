@@ -43,6 +43,7 @@ export function AdminPanel({ open, onClose }: Props) {
     { type: 'new', text: '' },
   ]);
   const [versionCode, setVersionCode] = useState('');
+  const [versionFileName, setVersionFileName] = useState('');
 
   // Script state
   const [scriptName, setScriptName] = useState('renault_v3.2.lua');
@@ -79,6 +80,7 @@ export function AdminPanel({ open, onClose }: Props) {
     setStatus('release');
     setChanges([{ type: 'new', text: '' }]);
     setVersionCode('');
+    setVersionFileName('');
     setEditing(null);
   };
 
@@ -130,6 +132,11 @@ export function AdminPanel({ open, onClose }: Props) {
       newEntry.code = versionCode.trim();
     }
 
+    // Attach custom file name if provided
+    if (versionFileName.trim()) {
+      newEntry.fileName = versionFileName.trim();
+    }
+
     let updated: ChangelogEntry[];
     if (editing !== null) {
       updated = [...entries];
@@ -152,6 +159,7 @@ export function AdminPanel({ open, onClose }: Props) {
     setStatus(e.status);
     setChanges(e.changes.map(c => ({ ...c })) as { type: 'new' | 'fix' | 'upd'; text: string }[]);
     setVersionCode(e.code || '');
+    setVersionFileName(e.fileName || '');
     setEditing(idx);
   };
 
@@ -334,6 +342,21 @@ export function AdminPanel({ open, onClose }: Props) {
                       ))}
                     </div>
 
+                    {/* File name for this version */}
+                    <div className="mb-4">
+                      <label className="block text-[11px] font-mono text-white-15 mb-1.5">
+                        Название скачиваемого файла <span className="text-white-8">(опционально)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={versionFileName}
+                        onChange={(e) => setVersionFileName(e.target.value)}
+                        placeholder="renault_v3.2.lua"
+                        className="w-full px-3 py-2.5 rounded-lg bg-void border border-white-8 text-[13px] text-white-90 font-mono placeholder:text-white-15 outline-none focus:border-grav/40 transition-colors"
+                      />
+                      <p className="text-[10px] text-white-8 mt-1">Если не указано, будет сгенерировано автоматически</p>
+                    </div>
+
                     {/* Code for this version */}
                     <div className="mb-4">
                       <label className="block text-[11px] font-mono text-white-15 mb-1.5">
@@ -395,6 +418,11 @@ export function AdminPanel({ open, onClose }: Props) {
                                 {e.code && (
                                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-grav/20 text-grav-light/50 bg-grav/5">
                                     КОД
+                                  </span>
+                                )}
+                                {e.fileName && (
+                                  <span className="text-[9px] font-mono text-white-15">
+                                    {e.fileName}
                                   </span>
                                 )}
                                 <span className="text-[11px] text-white-15">{e.date}</span>

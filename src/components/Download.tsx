@@ -51,7 +51,7 @@ export function Download() {
       if (latest && latest.code) {
         return {
           code: latest.code,
-          name: `renault_${latest.ver.replace(/\s/g, '_')}.lua`,
+          name: latest.fileName || `renault_${latest.ver.replace(/\s/g, '_')}.lua`,
         };
       }
       // Fallback to global script
@@ -63,7 +63,7 @@ export function Download() {
     if (found && found.code) {
       return {
         code: found.code,
-        name: `renault_${found.ver.replace(/\s/g, '_')}.lua`,
+        name: found.fileName || `renault_${found.ver.replace(/\s/g, '_')}.lua`,
       };
     }
 

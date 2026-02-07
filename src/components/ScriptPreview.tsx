@@ -180,7 +180,7 @@ export function ScriptPreview() {
       const latestWithCode = changelog.find((v: ChangelogEntry) => v.status !== 'announce' && v.code);
       if (latestWithCode && latestWithCode.code) {
         setScriptData({
-          name: `renault_${latestWithCode.ver.replace(/\s/g, '_')}.lua`,
+          name: latestWithCode.fileName || `renault_${latestWithCode.ver.replace(/\s/g, '_')}.lua`,
           code: latestWithCode.code,
         });
         return;
