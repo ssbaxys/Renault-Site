@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { getChangelog as fetchChangelog, incrementDownloads, type ChangelogEntry } from '../firebase';
 
 const typeColors: Record<string, string> = {
@@ -34,37 +34,55 @@ export function Changelog() {
   const [loading, setLoading] = useState(true);
   const [downloadingIdx, setDownloadingIdx] = useState<number | null>(null);
 
-  const load = useCallback(async () => {
+  const load = async () => {
     setLoading(true);
     const data = await fetchChangelog();
     setVersions(data);
     setLoading(false);
-  }, []);
+  };
 
   useEffect(() => {
     load();
     const handler = () => { load(); };
     window.addEventListener('changelog-updated', handler);
     return () => window.removeEventListener('changelog-updated', handler);
-  }, [load]);
+  }, []);
 
   const isEmpty = versions.length === 0;
   const latestNonAnnounceIdx = versions.findIndex(v => v.status !== 'announce');
+
+  // Direct simple download - takes exact code and fileName from the entry
+  function downloadVersionFile(entry: ChangelogEntry) {
+    const code = entry.code || '';
+    const fileName = entry.fileName && entry.fileName.trim() !== ''
+      ? entry.fileName
+      : `renault_${entry.ver.replace(/\s/g, '_')}.lua`;
+
+    console.log('[Changelog] Downloading:', fileName, '| codeLen:', code.length);
+
+    const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   const handleDownloadVersion = async (entry: ChangelogEntry, idx: number) => {
     if (!entry.code) return;
     setDownloadingIdx(idx);
 
-    const blob = new Blob([entry.code], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = entry.fileName || `renault_${entry.ver.replace(/\s/g, '_')}.lua`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadVersionFile(entry);
 
-    await incrementDownloads();
-    window.dispatchEvent(new Event('download-count-updated'));
+    try {
+      await incrementDownloads();
+      window.dispatchEvent(new Event('download-count-updated'));
+    } catch (err) {
+      console.error('Increment error:', err);
+    }
 
     setTimeout(() => setDownloadingIdx(null), 2000);
   };
@@ -109,7 +127,7 @@ export function Changelog() {
               {versions.map((v, vi) => {
                 const isLatest = vi === latestNonAnnounceIdx && v.status !== 'announce';
                 const isAnnounce = v.status === 'announce';
-                const hasCode = !!v.code;
+                const hasCode = !!(v.code && v.code.trim().length > 0);
                 const isDownloading = downloadingIdx === vi;
 
                 return (

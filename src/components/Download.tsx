@@ -1,117 +1,120 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getScript, getChangelog, incrementDownloads, type ChangelogEntry } from '../firebase';
 import { BlackHoleCard } from './BlackHoleCard';
 
-const DEFAULT_SCRIPT = `-- RENAULT Script\ngg.setVisible(false)`;
-const DEFAULT_NAME = 'renault.lua';
+const DEFAULT_CODE = `-- RENAULT Script\ngg.setVisible(false)`;
+const DEFAULT_FILENAME = 'renault.lua';
 
 export function Download() {
-  const [globalCode, setGlobalCode] = useState(DEFAULT_SCRIPT);
-  const [globalName, setGlobalName] = useState(DEFAULT_NAME);
   const [versions, setVersions] = useState<ChangelogEntry[]>([]);
-  const [selectedVersion, setSelectedVersion] = useState<string>('latest');
+  const [globalCode, setGlobalCode] = useState(DEFAULT_CODE);
+  const [globalFileName, setGlobalFileName] = useState(DEFAULT_FILENAME);
+  const [selectedVersion, setSelectedVersion] = useState('latest');
   const [isShaking, setIsShaking] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [ripple, setRipple] = useState(false);
 
-  const load = useCallback(async () => {
-    const [scriptData, changelogData] = await Promise.all([
-      getScript(),
-      getChangelog(),
-    ]);
-    if (scriptData && scriptData.code) {
-      setGlobalCode(scriptData.code);
-      setGlobalName(scriptData.name || DEFAULT_NAME);
+  const loadData = async () => {
+    try {
+      const [scriptData, changelogData] = await Promise.all([
+        getScript(),
+        getChangelog(),
+      ]);
+      if (scriptData) {
+        if (scriptData.code) setGlobalCode(scriptData.code);
+        if (scriptData.name) setGlobalFileName(scriptData.name);
+      }
+      if (changelogData) {
+        setVersions(changelogData);
+      }
+    } catch (e) {
+      console.error('Load error:', e);
     }
-    if (changelogData) {
-      setVersions(changelogData);
-    }
-  }, []);
+  };
 
   useEffect(() => {
-    load();
-    const h = () => { load(); };
-    window.addEventListener('script-updated', h);
-    window.addEventListener('changelog-updated', h);
+    loadData();
+    const handler = () => loadData();
+    window.addEventListener('script-updated', handler);
+    window.addEventListener('changelog-updated', handler);
     return () => {
-      window.removeEventListener('script-updated', h);
-      window.removeEventListener('changelog-updated', h);
+      window.removeEventListener('script-updated', handler);
+      window.removeEventListener('changelog-updated', handler);
     };
-  }, [load]);
+  }, []);
 
-  // Get downloadable versions (non-announce, with code)
-  const downloadableVersions = useMemo(
-    () => versions.filter(v => v.status !== 'announce' && v.code && v.code.trim().length > 0),
-    [versions]
-  );
+  // Simple function: get all versions that have code and are not announcements
+  function getDownloadableVersions(): ChangelogEntry[] {
+    return versions.filter(v => v.status !== 'announce' && v.code && v.code.trim().length > 0);
+  }
 
-  // Build download info
-  const getDownloadInfo = useCallback((): { code: string; name: string } => {
-    // If specific version selected
+  // Simple function: resolve what to download RIGHT NOW
+  function resolveDownload(): { code: string; fileName: string } {
+    const downloadable = getDownloadableVersions();
+
     if (selectedVersion !== 'latest') {
-      const found = versions.find(v => v.ver === selectedVersion);
-      if (found && found.code && found.code.trim().length > 0) {
-        const name = (found.fileName && found.fileName.trim().length > 0)
-          ? found.fileName.trim()
-          : `renault_${found.ver.replace(/\s/g, '_')}.lua`;
-        return { code: found.code, name };
+      // Find specific version
+      const found = downloadable.find(v => v.ver === selectedVersion);
+      if (found) {
+        return {
+          code: found.code!,
+          fileName: found.fileName && found.fileName.trim() !== ''
+            ? found.fileName
+            : `renault_${found.ver.replace(/\s/g, '_')}.lua`,
+        };
       }
     }
 
-    // Latest — first non-announce with code
-    if (downloadableVersions.length > 0) {
-      const latest = downloadableVersions[0];
-      const name = (latest.fileName && latest.fileName.trim().length > 0)
-        ? latest.fileName.trim()
-        : `renault_${latest.ver.replace(/\s/g, '_')}.lua`;
-      return { code: latest.code!, name };
+    // Latest version (first downloadable)
+    if (downloadable.length > 0) {
+      const latest = downloadable[0];
+      return {
+        code: latest.code!,
+        fileName: latest.fileName && latest.fileName.trim() !== ''
+          ? latest.fileName
+          : `renault_${latest.ver.replace(/\s/g, '_')}.lua`,
+      };
     }
 
-    // Fallback to global
-    return { code: globalCode, name: globalName };
-  }, [selectedVersion, versions, downloadableVersions, globalCode, globalName]);
+    // Fallback to global script
+    return { code: globalCode, fileName: globalFileName };
+  }
 
-  // Current download info for display
-  const currentDownload = useMemo(() => getDownloadInfo(), [getDownloadInfo]);
-
-  // Use ref to always have latest download info in async callback
-  const downloadRef = useRef(currentDownload);
-  useEffect(() => {
-    downloadRef.current = currentDownload;
-  }, [currentDownload]);
-
-  const fileSize = useMemo(
-    () => (new Blob([currentDownload.code]).size / 1024).toFixed(1),
-    [currentDownload.code]
-  );
-
-  const doDownload = (code: string, fileName: string) => {
-    const blob = new Blob([code], { type: 'text/plain' });
+  // Direct download function - no wrappers
+  function triggerDownload(code: string, fileName: string) {
+    const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
 
-    // Capture download info RIGHT NOW before setTimeout
-    const info = getDownloadInfo();
+    // Resolve what to download RIGHT HERE, RIGHT NOW
+    const { code, fileName } = resolveDownload();
+
+    // Log for debugging
+    console.log('[Download] fileName:', fileName, '| codeLength:', code.length, '| selectedVersion:', selectedVersion);
 
     setIsShaking(true);
     setRipple(true);
 
     setTimeout(async () => {
-      // Use the captured info, not stale closure
-      doDownload(info.code, info.name);
+      // Actually download with the resolved values
+      triggerDownload(code, fileName);
 
-      await incrementDownloads();
-      window.dispatchEvent(new Event('download-count-updated'));
+      try {
+        await incrementDownloads();
+        window.dispatchEvent(new Event('download-count-updated'));
+      } catch (err) {
+        console.error('Increment error:', err);
+      }
 
       setDownloaded(true);
 
@@ -125,6 +128,11 @@ export function Download() {
       }, 3000);
     }, 600);
   };
+
+  // Current display info
+  const currentInfo = resolveDownload();
+  const fileSize = (new Blob([currentInfo.code]).size / 1024).toFixed(1);
+  const downloadable = getDownloadableVersions();
 
   return (
     <>
@@ -172,7 +180,7 @@ export function Download() {
                   </p>
 
                   {/* Version selector */}
-                  {downloadableVersions.length > 0 && (
+                  {downloadable.length > 0 && (
                     <div className="mb-6">
                       <label className="block text-[11px] font-mono text-white-15 mb-2">Версия</label>
                       <select
@@ -186,9 +194,9 @@ export function Download() {
                         }}
                       >
                         <option value="latest">Последняя версия</option>
-                        {downloadableVersions.map((v, i) => (
+                        {downloadable.map((v, i) => (
                           <option key={i} value={v.ver}>
-                            {v.ver} — {v.status === 'announce' ? 'АНОНС' : v.status.toUpperCase()} — {v.date}
+                            {v.ver} — {v.status.toUpperCase()} — {v.date}
                           </option>
                         ))}
                       </select>
@@ -231,7 +239,7 @@ export function Download() {
                   <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-[12px] text-white-15">
                     <span className="flex items-center gap-1.5">
                       <span className="w-1 h-1 rounded-full bg-white-15" />
-                      {currentDownload.name}
+                      {currentInfo.fileName}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-1 h-1 rounded-full bg-white-15" />
