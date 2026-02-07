@@ -53,7 +53,7 @@ export function Footer() {
           <div className="mt-10 pt-6 border-t border-white-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <p className="text-[11px] text-white-8">
-                © 2025 Renault Script · Только для развлекательных целей
+                © 2025 Renault Script · MIT License · Только для развлекательных целей
               </p>
               <button
                 onClick={() => setAdminOpen(true)}

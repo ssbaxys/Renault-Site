@@ -18,7 +18,7 @@ const db = getDatabase(app);
 export interface ChangelogEntry {
   ver: string;
   date: string;
-  status: 'dev' | 'alpha' | 'beta' | 'release';
+  status: 'dev' | 'alpha' | 'beta' | 'release' | 'announce';
   changes: { type: 'new' | 'fix' | 'upd'; text: string }[];
 }
 

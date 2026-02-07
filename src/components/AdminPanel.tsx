@@ -14,11 +14,14 @@ interface Props {
   onClose: () => void;
 }
 
+type VersionStatus = 'dev' | 'alpha' | 'beta' | 'release' | 'announce';
+
 const statusBtnColors: Record<string, string> = {
   dev: 'bg-orange-400/15 border-orange-400/30 text-orange-400',
   alpha: 'bg-err/15 border-err/30 text-err',
   beta: 'bg-amber-300/15 border-amber-300/30 text-amber-300',
   release: 'bg-ok/15 border-ok/30 text-ok',
+  announce: 'bg-sky-400/15 border-sky-400/30 text-sky-400',
 };
 
 const statusBtnInactive = 'bg-void border-white-8 text-white-30 hover:border-white-15';
@@ -35,7 +38,7 @@ export function AdminPanel({ open, onClose }: Props) {
   const [editing, setEditing] = useState<number | null>(null);
   const [ver, setVer] = useState('');
   const [date, setDate] = useState('');
-  const [status, setStatus] = useState<'dev' | 'alpha' | 'beta' | 'release'>('release');
+  const [status, setStatus] = useState<VersionStatus>('release');
   const [changes, setChanges] = useState<{ type: 'new' | 'fix' | 'upd'; text: string }[]>([
     { type: 'new', text: '' },
   ]);
@@ -250,7 +253,7 @@ export function AdminPanel({ open, onClose }: Props) {
                       {editing !== null ? `Редактирование ${entries[editing]?.ver}` : 'Новая версия'}
                     </p>
 
-                    <div className="grid sm:grid-cols-3 gap-3 mb-4">
+                    <div className="grid sm:grid-cols-2 gap-3 mb-4">
                       <div>
                         <label className="block text-[11px] font-mono text-white-15 mb-1.5">Версия</label>
                         <input
@@ -267,21 +270,22 @@ export function AdminPanel({ open, onClose }: Props) {
                           className="w-full px-3 py-2.5 rounded-lg bg-void border border-white-8 text-[13px] text-white-90 placeholder:text-white-15 outline-none focus:border-grav/40 transition-colors"
                         />
                       </div>
-                      <div>
-                        <label className="block text-[11px] font-mono text-white-15 mb-1.5">Статус</label>
-                        <div className="flex gap-1">
-                          {(['dev', 'alpha', 'beta', 'release'] as const).map((s) => (
-                            <button
-                              key={s}
-                              onClick={() => setStatus(s)}
-                              className={`flex-1 py-2.5 rounded-lg text-[10px] font-mono font-medium border transition-all ${
-                                status === s ? statusBtnColors[s] : statusBtnInactive
-                              }`}
-                            >
-                              {s.toUpperCase()}
-                            </button>
-                          ))}
-                        </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-[11px] font-mono text-white-15 mb-1.5">Статус</label>
+                      <div className="flex gap-1 flex-wrap">
+                        {(['dev', 'alpha', 'beta', 'release', 'announce'] as const).map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setStatus(s)}
+                            className={`px-3 py-2.5 rounded-lg text-[10px] font-mono font-medium border transition-all ${
+                              status === s ? statusBtnColors[s] : statusBtnInactive
+                            }`}
+                          >
+                            {s === 'announce' ? 'АНОНС' : s.toUpperCase()}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
@@ -322,7 +326,7 @@ export function AdminPanel({ open, onClose }: Props) {
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <button onClick={handleAddChange}
                         className="px-4 py-2 rounded-lg border border-white-8 text-[12px] text-white-30 hover:text-white-50 hover:border-white-15 transition-all">
                         + Добавить изменение
@@ -351,15 +355,12 @@ export function AdminPanel({ open, onClose }: Props) {
                         {entries.map((e: ChangelogEntry, ei: number) => (
                           <div key={ei} className="rounded-xl border border-white-8 bg-void-3 p-4">
                             <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-mono text-[14px] text-white-70">{e.ver}</span>
                                 <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
-                                  e.status === 'release' ? 'text-ok/60 bg-ok/5 border-ok/10'
-                                  : e.status === 'beta' ? 'text-amber-300/60 bg-amber-300/5 border-amber-300/10'
-                                  : e.status === 'alpha' ? 'text-err/60 bg-err/5 border-err/10'
-                                  : 'text-orange-400/60 bg-orange-400/5 border-orange-400/10'
+                                  statusBtnColors[e.status] || statusBtnColors.release
                                 }`}>
-                                  {e.status.toUpperCase()}
+                                  {e.status === 'announce' ? 'АНОНС' : e.status.toUpperCase()}
                                 </span>
                                 <span className="text-[11px] text-white-15">{e.date}</span>
                               </div>

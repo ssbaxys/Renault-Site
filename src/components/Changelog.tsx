@@ -18,6 +18,7 @@ const statusColors: Record<string, string> = {
   alpha: 'text-err/80 bg-err/5 border-err/20',
   beta: 'text-amber-300/80 bg-amber-300/5 border-amber-300/20',
   release: 'text-ok/80 bg-ok/5 border-ok/20',
+  announce: 'text-sky-400/80 bg-sky-400/5 border-sky-400/20',
 };
 
 const statusLabels: Record<string, string> = {
@@ -25,6 +26,7 @@ const statusLabels: Record<string, string> = {
   alpha: 'ALPHA',
   beta: 'BETA',
   release: 'RELEASE',
+  announce: 'АНОНС',
 };
 
 export function Changelog() {
@@ -47,6 +49,9 @@ export function Changelog() {
 
   const isEmpty = versions.length === 0;
 
+  // Find index of latest non-announce version
+  const latestNonAnnounceIdx = versions.findIndex(v => v.status !== 'announce');
+
   return (
     <section id="changelog" className="relative py-28 z-[1]">
       <div className="section-divider max-w-6xl mx-auto mb-28" />
@@ -61,6 +66,11 @@ export function Changelog() {
               История<br />
               <span className="text-white-30">обновлений.</span>
             </h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-mono text-white-15 px-3 py-1.5 rounded-lg border border-white-8 bg-void-1">
+              MIT License
+            </span>
           </div>
         </div>
 
@@ -79,41 +89,48 @@ export function Changelog() {
             <div className="absolute left-[7px] top-4 bottom-4 w-px bg-white-8" />
 
             <div className="space-y-10">
-              {versions.map((v, vi) => (
-                <div key={vi} className="relative pl-8 md:pl-10">
-                  <div className={`absolute left-0 top-1.5 w-[15px] h-[15px] rounded-full border-2 ${
-                    vi === 0 ? 'border-grav bg-grav/20' : 'border-white-15 bg-void'
-                  }`}>
-                    {vi === 0 && <div className="absolute inset-[3px] rounded-full bg-grav animate-pulse" />}
-                  </div>
+              {versions.map((v, vi) => {
+                const isLatest = vi === latestNonAnnounceIdx && v.status !== 'announce';
+                const isAnnounce = v.status === 'announce';
 
-                  <div className="flex flex-wrap items-center gap-3 mb-4">
-                    <span className={`font-mono font-medium text-[15px] ${vi === 0 ? 'text-white-90' : 'text-white-50'}`}>
-                      {v.ver}
-                    </span>
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${statusColors[v.status] || statusColors.release}`}>
-                      {statusLabels[v.status] || v.status.toUpperCase()}
-                    </span>
-                    {vi === 0 && (
-                      <span className="text-[10px] font-mono text-ok/70 px-2 py-0.5 rounded-full bg-ok/10 border border-ok/20">
-                        LATEST
+                return (
+                  <div key={vi} className={`relative pl-8 md:pl-10 ${isAnnounce ? 'opacity-80' : ''}`}>
+                    <div className={`absolute left-0 top-1.5 w-[15px] h-[15px] rounded-full border-2 ${
+                      isLatest ? 'border-grav bg-grav/20'
+                      : isAnnounce ? 'border-sky-400/30 bg-sky-400/10'
+                      : 'border-white-15 bg-void'
+                    }`}>
+                      {isLatest && <div className="absolute inset-[3px] rounded-full bg-grav animate-pulse" />}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                      <span className={`font-mono font-medium text-[15px] ${isLatest ? 'text-white-90' : 'text-white-50'}`}>
+                        {v.ver}
                       </span>
-                    )}
-                    <span className="text-[12px] text-white-15">{v.date}</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    {v.changes.map((c, ci) => (
-                      <div key={ci} className="flex items-start gap-3">
-                        <span className={`text-[9px] font-mono font-medium px-1.5 py-0.5 rounded border shrink-0 mt-0.5 ${typeColors[c.type] || typeColors.upd}`}>
-                          {typeLabels[c.type] || c.type.toUpperCase()}
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${statusColors[v.status] || statusColors.release}`}>
+                        {statusLabels[v.status] || v.status.toUpperCase()}
+                      </span>
+                      {isLatest && (
+                        <span className="text-[10px] font-mono text-ok/70 px-2 py-0.5 rounded-full bg-ok/10 border border-ok/20">
+                          LATEST
                         </span>
-                        <span className="text-[13px] text-white-30 leading-relaxed">{c.text}</span>
-                      </div>
-                    ))}
+                      )}
+                      <span className="text-[12px] text-white-15">{v.date}</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {v.changes.map((c, ci) => (
+                        <div key={ci} className="flex items-start gap-3">
+                          <span className={`text-[9px] font-mono font-medium px-1.5 py-0.5 rounded border shrink-0 mt-0.5 ${typeColors[c.type] || typeColors.upd}`}>
+                            {typeLabels[c.type] || c.type.toUpperCase()}
+                          </span>
+                          <span className="text-[13px] text-white-30 leading-relaxed">{c.text}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

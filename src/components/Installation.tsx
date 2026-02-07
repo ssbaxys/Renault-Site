@@ -9,7 +9,6 @@ const steps = [
       'VMOS — если нет root',
     ],
     note: 'Root / Virtual Space',
-    icon: '⬇',
   },
   {
     num: '02',
@@ -21,7 +20,6 @@ const steps = [
       'Не сворачивай игру',
     ],
     note: 'Hypper Sandbox 0.5.0.2',
-    icon: '▶',
   },
   {
     num: '03',
@@ -33,7 +31,6 @@ const steps = [
       'Выбери скрипт Renault',
     ],
     note: 'Файл → Скрипт → .lua',
-    icon: '⚡',
   },
   {
     num: '04',
@@ -45,7 +42,6 @@ const steps = [
       'Настрой параметры под себя',
     ],
     note: 'GG → Меню → Функции',
-    icon: '✓',
   },
 ];
 
@@ -79,12 +75,9 @@ export function Installation() {
               <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-grav/0 via-grav/20 to-grav/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
               <div className="p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-10">
-                <div className="flex md:flex-col items-center md:items-start gap-4 md:gap-2 shrink-0">
+                <div className="shrink-0">
                   <span className="font-display font-bold text-3xl md:text-4xl text-white-4 group-hover:text-white-8 transition-colors duration-500">
                     {step.num}
-                  </span>
-                  <span className="text-lg text-grav/40 group-hover:text-grav-light/60 transition-colors duration-500">
-                    {step.icon}
                   </span>
                 </div>
 
