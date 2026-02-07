@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getScript, getChangelog, incrementDownloads, type ChangelogEntry } from '../firebase';
 import { BlackHoleCard } from './BlackHoleCard';
 
-const DEFAULT_SCRIPT = `-- RENAULT Script v3.2.0\ngg.setVisible(false)`;
-const DEFAULT_NAME = 'renault_v3.2.lua';
+const DEFAULT_SCRIPT = `-- RENAULT Script\ngg.setVisible(false)`;
+const DEFAULT_NAME = 'renault.lua';
 
 export function Download() {
   const [globalCode, setGlobalCode] = useState(DEFAULT_SCRIPT);
@@ -21,7 +21,7 @@ export function Download() {
     ]);
     if (scriptData && scriptData.code) {
       setGlobalCode(scriptData.code);
-      setGlobalName(scriptData.name);
+      setGlobalName(scriptData.name || DEFAULT_NAME);
     }
     if (changelogData) {
       setVersions(changelogData);
@@ -30,45 +30,51 @@ export function Download() {
 
   useEffect(() => {
     load();
-    const h1 = () => { load(); };
-    const h2 = () => { load(); };
-    window.addEventListener('script-updated', h1);
-    window.addEventListener('changelog-updated', h2);
+    const h = () => { load(); };
+    window.addEventListener('script-updated', h);
+    window.addEventListener('changelog-updated', h);
     return () => {
-      window.removeEventListener('script-updated', h1);
-      window.removeEventListener('changelog-updated', h2);
+      window.removeEventListener('script-updated', h);
+      window.removeEventListener('changelog-updated', h);
     };
   }, [load]);
 
   // Get downloadable versions (non-announce, with code)
-  const downloadableVersions = versions.filter(v => v.status !== 'announce' && v.code);
+  const downloadableVersions = useMemo(
+    () => versions.filter(v => v.status !== 'announce' && v.code),
+    [versions]
+  );
 
-  // Determine what code/name to download
-  const getDownloadData = (): { code: string; name: string } => {
-    if (selectedVersion === 'latest') {
-      // Find first non-announce version with code
-      const latest = downloadableVersions[0];
-      if (latest && latest.code) {
+  // Determine what code/name to download based on selected version
+  const currentDownload = useMemo(() => {
+    if (selectedVersion !== 'latest') {
+      // Find specific version
+      const found = versions.find(v => v.ver === selectedVersion);
+      if (found && found.code) {
         return {
-          code: latest.code,
-          name: latest.fileName || `renault_${latest.ver.replace(/\s/g, '_')}.lua`,
+          code: found.code,
+          name: found.fileName || `renault_${found.ver.replace(/\s/g, '_')}.lua`,
         };
       }
-      // Fallback to global script
-      return { code: globalCode, name: globalName };
     }
 
-    // Find specific version
-    const found = versions.find(v => v.ver === selectedVersion);
-    if (found && found.code) {
+    // Latest — find first non-announce version with code
+    if (downloadableVersions.length > 0) {
+      const latest = downloadableVersions[0];
       return {
-        code: found.code,
-        name: found.fileName || `renault_${found.ver.replace(/\s/g, '_')}.lua`,
+        code: latest.code!,
+        name: latest.fileName || `renault_${latest.ver.replace(/\s/g, '_')}.lua`,
       };
     }
 
+    // Fallback to global script
     return { code: globalCode, name: globalName };
-  };
+  }, [selectedVersion, versions, downloadableVersions, globalCode, globalName]);
+
+  const fileSize = useMemo(
+    () => (new Blob([currentDownload.code]).size / 1024).toFixed(1),
+    [currentDownload.code]
+  );
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,13 +83,15 @@ export function Download() {
     setRipple(true);
 
     setTimeout(async () => {
-      const { code, name } = getDownloadData();
-      const blob = new Blob([code], { type: 'text/plain' });
+      // Create blob and download using currentDownload (which uses version's fileName)
+      const blob = new Blob([currentDownload.code], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = name;
+      a.download = currentDownload.name;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
       await incrementDownloads();
@@ -101,10 +109,6 @@ export function Download() {
       }, 3000);
     }, 600);
   };
-
-  const currentDownload = getDownloadData();
-  const selectedCode = currentDownload.code;
-  const fileSize = (new Blob([selectedCode]).size / 1024).toFixed(1);
 
   return (
     <>
@@ -168,7 +172,7 @@ export function Download() {
                         <option value="latest">Последняя версия</option>
                         {downloadableVersions.map((v, i) => (
                           <option key={i} value={v.ver}>
-                            {v.ver} — {v.status === 'announce' ? 'АНОНС' : v.status.toUpperCase()} — {v.date}
+                            {v.ver} — {v.status.toUpperCase()} — {v.date}
                           </option>
                         ))}
                       </select>
@@ -211,7 +215,7 @@ export function Download() {
                   <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-[12px] text-white-15">
                     <span className="flex items-center gap-1.5">
                       <span className="w-1 h-1 rounded-full bg-white-15" />
-                      Lua 5.3
+                      {currentDownload.name}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-1 h-1 rounded-full bg-white-15" />
