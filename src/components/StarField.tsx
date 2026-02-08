@@ -6,8 +6,6 @@ interface StarStyle {
   width: string;
   height: string;
   opacity: number;
-  animationDuration: string;
-  animationDelay: string;
   background: string;
   boxShadow: string;
 }
@@ -15,19 +13,17 @@ interface StarStyle {
 export default function StarField() {
   const stars = useMemo(() => {
     const result: StarStyle[] = [];
-    for (let i = 0; i < 80; i++) {
-      const isPurple = Math.random() < 0.3;
-      const size = Math.random() * 2 + 1;
+    for (let i = 0; i < 120; i++) {
+      const size = Math.random() * 2 + 0.5;
+      const opacity = Math.random() * 0.6 + 0.2;
       result.push({
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`,
         width: `${size}px`,
         height: `${size}px`,
-        opacity: Math.random() * 0.5 + 0.15,
-        animationDuration: `${Math.random() * 4 + 3}s`,
-        animationDelay: `${Math.random() * 5}s`,
-        background: isPurple ? 'rgba(140,120,255,0.9)' : 'rgba(255,255,255,0.85)',
-        boxShadow: isPurple ? '0 0 6px rgba(140,120,255,0.5)' : 'none',
+        opacity,
+        background: 'rgba(255,255,255,0.9)',
+        boxShadow: size > 1.5 ? `0 0 ${size * 2}px rgba(255,255,255,0.3)` : 'none',
       });
     }
     return result;
@@ -38,7 +34,7 @@ export default function StarField() {
       {stars.map((s, i) => (
         <div
           key={i}
-          className="absolute rounded-full animate-twinkle"
+          className="absolute rounded-full"
           style={s}
         />
       ))}

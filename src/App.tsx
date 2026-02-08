@@ -12,18 +12,23 @@ import { Footer } from './components/Footer';
 
 export function App() {
   return (
-    <div className="min-h-screen bg-void text-white-90 relative">
+    <div className="min-h-screen bg-black text-white relative">
+      {/* Static stars background */}
       <StarField />
-      <Navbar />
-      <Hero />
-      <Features />
-      <Compatibility />
-      <ScriptPreview />
-      <Installation />
-      <Changelog />
-      <FAQ />
-      <Download />
-      <Footer />
+      
+      {/* Content */}
+      <div className="relative z-10">
+        <Navbar />
+        <Hero />
+        <Features />
+        <Compatibility />
+        <ScriptPreview />
+        <Installation />
+        <Changelog />
+        <FAQ />
+        <Download />
+        <Footer />
+      </div>
     </div>
   );
 }
