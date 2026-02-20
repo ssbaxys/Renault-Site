@@ -6,180 +6,162 @@ export function BlackHoleCard() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const ctx = canvas.getContext('2d')!;
-    let animId: number;
-    let W = 0, H = 0;
-
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio, 2);
-      W = rect.width;
-      H = rect.height;
-      canvas.width = W * dpr;
-      canvas.height = H * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-
-    resize();
-    window.addEventListener('resize', resize);
-
-    const CX = () => W / 2;
-    const CY = () => H / 2;
-
-    interface Particle {
-      angle: number;
-      radius: number;
-      speed: number;
-      size: number;
-      opacity: number;
-      hue: number;
-      drift: number;
-      baseRadius: number;
-    }
-
-    const PARTICLE_COUNT = 90;
-    const particles: Particle[] = [];
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const baseRadius = 30 + Math.random() * 120;
-      particles.push({
-        angle: Math.random() * Math.PI * 2,
-        radius: baseRadius,
-        baseRadius,
-        speed: 0.002 + Math.random() * 0.012,
-        size: 0.4 + Math.random() * 1.8,
-        opacity: 0.15 + Math.random() * 0.7,
-        hue: Math.random() > 0.6 ? 260 + Math.random() * 20 : 0,
-        drift: -0.08 - Math.random() * 0.25,
-      });
-    }
-
+    const ctx = canvas.getContext('2d', { alpha: true })!;
+    
+    let w = 0, h = 0, cx = 0, cy = 0;
+    let animationFrameId: number;
     let time = 0;
 
+    const resize = () => {
+      const rect = canvas.parentElement!.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = rect.width;
+      h = rect.height;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.scale(dpr, dpr);
+      cx = w / 2;
+      cy = h / 2;
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Create a robust particle system for the accretion disk
+    const particles: any[] = [];
+    const particleCount = 450;
+    
+    for(let i = 0; i < particleCount; i++) {
+        particles.push(createParticle(true));
+    }
+
+    function createParticle(init = false) {
+        // Distribute particles logarithmically so more are closer to the center,
+        // but extend far out to form a wide, beautiful disk.
+        const radius = init ? 25 + Math.pow(Math.random(), 2) * 160 : 180 + Math.random() * 40;
+        const angle = Math.random() * Math.PI * 2;
+        return {
+            r: radius,
+            a: angle,
+            s: (0.003 + Math.random() * 0.015), // Base orbit speed
+            z: (Math.random() - 0.5) * (Math.random() < 0.1 ? 40 : 10), // Disk thickness (Z variance)
+            size: 0.5 + Math.random() * 1.8,
+            h: Math.random() > 0.3 ? 240 + Math.random() * 40 : 280 + Math.random() * 30, // Purple to Pink/Violet
+            drift: Math.random() * 0.4 + 0.1, // Inward drift speed
+            opacityToggle: Math.random()
+        };
+    }
+
     const draw = () => {
-      time += 0.016;
-      ctx.clearRect(0, 0, W, H);
+        time += 0.015;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.clearRect(0, 0, w, h);
+        
+        // --- 1. Distant Background Glow ---
+        const bgGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 180);
+        bgGlow.addColorStop(0, 'rgba(80, 40, 240, 0.12)');
+        bgGlow.addColorStop(0.3, 'rgba(40, 20, 160, 0.06)');
+        bgGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = bgGlow;
+        ctx.fillRect(0, 0, w, h);
 
-      const cx = CX();
-      const cy = CY();
+        ctx.globalCompositeOperation = 'lighter';
 
-      // Outer glow halo
-      const outerGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 140);
-      outerGlow.addColorStop(0, 'rgba(124, 110, 245, 0)');
-      outerGlow.addColorStop(0.3, 'rgba(124, 110, 245, 0)');
-      outerGlow.addColorStop(0.55, 'rgba(124, 110, 245, 0.03)');
-      outerGlow.addColorStop(0.75, 'rgba(99, 102, 241, 0.015)');
-      outerGlow.addColorStop(1, 'rgba(124, 110, 245, 0)');
-      ctx.fillStyle = outerGlow;
-      ctx.fillRect(0, 0, W, H);
+        // --- 2. Render Accretion Disk (Particles) ---
+        particles.forEach(p => {
+            // Mechanics
+            const orbitVelocity = p.s + (40 / Math.max(p.r, 1)) * 0.008; 
+            p.a += orbitVelocity; // Closer = faster
+            p.r -= p.drift + (30 / Math.max(p.r, 1)) * 0.1; // Pull towards event horizon
+            
+            // Warp Z lightly over time for fluid feel
+            p.z += Math.sin(time * 2 + p.a) * 0.2;
 
-      // Accretion disk — тонкое эллиптическое кольцо
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(1, 0.35);
-      for (let r = 28; r < 80; r += 1) {
-        const alpha = Math.max(0, 0.06 - (r - 28) * 0.001) * (0.7 + 0.3 * Math.sin(time * 0.5 + r * 0.1));
+            // Recycle if swallowed
+            if (p.r < 19) {
+                Object.assign(p, createParticle(false));
+            }
+
+            // 3D Tilt Projection (Interstellar style)
+            const tilt = 0.28; // Tilt factor (0.0 flat line, 1.0 perfect circle above)
+            
+            // Lensing faux-effect: particles behind the black hole get warped up
+            const isBehind = Math.sin(p.a) < 0; 
+            let lensingZ = p.z;
+            if (isBehind && p.r < 60) {
+                // Intense curving over the top poles
+                lensingZ += (60 - p.r) * 1.2 * Math.abs(Math.cos(p.a)); 
+            } else if (!isBehind && p.r < 40) {
+                // Curving under the bottom poles
+                lensingZ -= (40 - p.r) * 0.5 * Math.abs(Math.cos(p.a));
+            }
+
+            const x = cx + p.r * Math.cos(p.a);
+            const y = cy + (p.r * Math.sin(p.a) + lensingZ) * tilt;
+            
+            // Doppler Effect (brighter & bluer when moving towards viewer (left), dimmer & redder moving away (right))
+            const dirX = -Math.sin(p.a);
+            const doppler = Math.max(0.05, 0.6 + dirX * 0.6);
+            
+            // Fade near horizon and scale size
+            const horizonFade = Math.min(1, (p.r - 18) / 15);
+            let alpha = doppler * horizonFade * 0.9;
+
+            // Twinkle effect for some stars
+            if (p.opacityToggle > 0.8) {
+               alpha *= (0.5 + 0.5 * Math.sin(time * 10 + p.r));
+            }
+            
+            ctx.beginPath();
+            ctx.arc(x, y, p.size * (0.5 + doppler * 0.5) * horizonFade, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${p.h - dirX * 15}, 85%, ${60 + doppler * 20}%, ${alpha})`;
+            ctx.fill();
+        });
+
+        // --- 3. Event Horizon (Black Core) ---
+        ctx.globalCompositeOperation = 'source-over';
         ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.strokeStyle = r < 45
-          ? `rgba(167, 139, 250, ${alpha})`
-          : `rgba(124, 110, 245, ${alpha * 0.6})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // Event horizon — core shadow
-      const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 26);
-      coreGrad.addColorStop(0, 'rgba(0, 0, 0, 1)');
-      coreGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.95)');
-      coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 26, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Inner bright ring
-      ctx.beginPath();
-      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(167, 139, 250, ${0.12 + 0.05 * Math.sin(time * 1.5)})`;
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      // Gravitational lensing ring (photon sphere)
-      ctx.beginPath();
-      ctx.arc(cx, cy, 25, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(199, 180, 255, ${0.06 + 0.03 * Math.sin(time * 2)})`;
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-
-      // Particles
-      for (const p of particles) {
-        p.angle += p.speed;
-        p.radius += p.drift * 0.15;
-
-        // Reset when sucked in
-        if (p.radius < 4) {
-          p.radius = p.baseRadius;
-          p.angle = Math.random() * Math.PI * 2;
-          p.opacity = 0.15 + Math.random() * 0.7;
-          p.speed = 0.002 + Math.random() * 0.012;
-        }
-
-        // Speed up as they get closer (gravitational acceleration)
-        const distFactor = Math.max(0.1, p.radius / p.baseRadius);
-        p.speed = (0.002 + Math.random() * 0.001) / (distFactor * distFactor) * 0.3;
-        p.drift = -0.08 - (1 - distFactor) * 0.6;
-
-        const px = cx + Math.cos(p.angle) * p.radius;
-        const py = cy + Math.sin(p.angle) * p.radius * 0.35; // Elliptical orbit
-
-        // Fade out when close to center
-        const fadeAlpha = Math.min(1, (p.radius - 4) / 30);
-        const alpha = p.opacity * fadeAlpha * (0.6 + 0.4 * Math.sin(time * 2 + p.angle));
-
-        if (p.hue > 0) {
-          ctx.fillStyle = `hsla(${p.hue}, 70%, 75%, ${alpha})`;
-        } else {
-          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        }
-
-        ctx.beginPath();
-        ctx.arc(px, py, p.size * fadeAlpha, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 23, 0, Math.PI * 2);
+        const coreGradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, 28);
+        coreGradient.addColorStop(0, '#000000');
+        coreGradient.addColorStop(0.7, 'rgba(0,0,0,0.95)');
+        coreGradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = coreGradient;
         ctx.fill();
 
-        // Tiny trail
-        if (p.radius < p.baseRadius * 0.6 && p.radius > 8) {
-          const trailAngle = p.angle - p.speed * 8;
-          const trailR = p.radius + 2;
-          const tx = cx + Math.cos(trailAngle) * trailR;
-          const ty = cy + Math.sin(trailAngle) * trailR * 0.35;
-          ctx.fillStyle = `rgba(167, 139, 250, ${alpha * 0.3})`;
-          ctx.beginPath();
-          ctx.arc(tx, ty, p.size * 0.4, 0, Math.PI * 2);
-          ctx.fill();
+        // --- 4. Photon Sphere (Intense Glowing Ring exactly on edge) ---
+        ctx.globalCompositeOperation = 'lighter';
+        for(let i=0; i<4; i++) {
+            ctx.beginPath();
+            const ringOffset = 21 + i*1.2;
+            ctx.arc(cx, cy, ringOffset, 0, Math.PI * 2);
+            // Pulsing opacity
+            const ringAlpha = (0.12 - i*0.02) * (1 + 0.3 * Math.sin(time * 4 - i));
+            ctx.strokeStyle = `rgba(180, 150, 255, ${ringAlpha})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
         }
-      }
+        
+        // --- 5. Gravitational Lensing Edge (Outer faint distortion ring) ---
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 40, 40, 0, 0, Math.PI*2);
+        ctx.strokeStyle = `rgba(130, 110, 255, ${0.04 + Math.sin(time*2)*0.015})`;
+        ctx.lineWidth = 12;
+        ctx.stroke();
 
-      animId = requestAnimationFrame(draw);
+        animationFrameId = requestAnimationFrame(draw);
     };
 
-    animId = requestAnimationFrame(draw);
+    draw();
 
     return () => {
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', resize);
     };
   }, []);
 
   return (
-    <div className="relative w-60 h-60 shrink-0 flex items-center justify-center">
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-        style={{ imageRendering: 'auto' }}
-      />
+    <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square shrink-0 mx-auto flex items-center justify-center pointer-events-none drop-shadow-[0_0_40px_rgba(124,110,245,0.2)]">
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full mix-blend-screen" />
     </div>
   );
 }

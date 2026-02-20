@@ -93,9 +93,8 @@ export function Download() {
   return (
     <>
       <div
-        className={`fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-300 ${
-          isShaking ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-300 ${isShaking ? 'opacity-100' : 'opacity-0'
+          }`}
         style={{
           background: 'radial-gradient(circle at center, rgba(124,110,245,0.06) 0%, transparent 70%)',
         }}
@@ -108,37 +107,37 @@ export function Download() {
       )}
 
       <section id="download" className={`relative py-28 z-[1] ${isShaking ? 'animate-screen-shake' : ''}`}>
-        <div className="section-divider max-w-6xl mx-auto mb-28" />
+        <div className="section-divider max-w-6xl mx-auto mb-16 md:mb-28" />
 
-        <div className="max-w-6xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="relative rounded-3xl border border-white-8 bg-void-1 overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-[radial-gradient(ellipse,rgba(124,110,245,0.05),transparent_70%)]" />
 
-            <div className="relative p-10 md:p-16">
-              <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            <div className="relative p-6 sm:p-10 md:p-16">
+              <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
 
                 <BlackHoleCard />
 
-                <div className="flex-1 text-center lg:text-left">
-                  <p className="text-[12px] font-mono text-grav-light tracking-[0.2em] uppercase mb-4">
+                <div className="flex-1 w-full text-center lg:text-left flex flex-col items-center lg:items-start">
+                  <p className="text-[11px] sm:text-[12px] font-mono text-grav-light tracking-[0.2em] uppercase mb-4">
                     // Скачать
                   </p>
-                  <h2 className="font-display font-bold text-3xl md:text-4xl text-white-90 tracking-tight mb-4 leading-tight">
+                  <h2 className="font-display font-bold text-3xl sm:text-4xl text-white-90 tracking-tight mb-4 leading-tight">
                     Готов к загрузке.
                   </h2>
-                  <p className="text-[15px] text-white-30 max-w-md mb-6 leading-relaxed">
+                  <p className="text-[14px] sm:text-[15px] text-white-30 max-w-md mb-6 sm:mb-8 leading-relaxed px-4 lg:px-0">
                     Бесплатно. Без регистрации. Без рекламы. Без ожидания.
                     Один клик — файл на устройстве.
                   </p>
 
                   {/* Выбор версии — простой нативный select */}
                   {downloadable.length > 1 && (
-                    <div className="mb-6">
+                    <div className="mb-6 w-full flex flex-col items-center lg:items-start">
                       <label className="block text-[11px] font-mono text-white-15 mb-2">Версия</label>
                       <select
                         value={selectedIdx}
                         onChange={(e) => setSelectedIdx(Number(e.target.value))}
-                        className="w-full max-w-xs px-4 py-2.5 rounded-xl bg-void-2 border border-white-8 text-[13px] text-white-70 font-mono outline-none hover:border-grav/40 transition-colors cursor-pointer appearance-none"
+                        className="w-full max-w-[260px] sm:max-w-xs px-4 py-3 sm:py-2.5 rounded-xl bg-void-2 border border-white-8 text-[13px] text-white-70 font-mono outline-none hover:border-grav/40 transition-colors cursor-pointer appearance-none"
                         style={{
                           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24' stroke='%23666' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
                           backgroundRepeat: 'no-repeat',
@@ -159,15 +158,14 @@ export function Download() {
                   <button
                     onClick={handleDownload}
                     disabled={isShaking || !current}
-                    className={`group relative inline-flex items-center gap-3 px-10 py-4 rounded-full text-[15px] font-semibold transition-all duration-300 ${
-                      !current
+                    className={`w-full max-w-[260px] sm:max-w-none sm:w-auto flex justify-center group relative inline-flex items-center gap-3 px-8 sm:px-10 py-4 rounded-full text-[15px] font-semibold transition-all duration-300 ${!current
                         ? 'bg-white-15 text-white-30 cursor-not-allowed'
                         : downloaded
-                        ? 'bg-ok/90 text-void shadow-[0_0_40px_rgba(74,222,128,0.2)]'
-                        : isShaking
-                        ? 'bg-grav text-white-pure shadow-[0_0_60px_rgba(124,110,245,0.4)] scale-95'
-                        : 'bg-white-pure text-void hover:shadow-[0_0_60px_rgba(124,110,245,0.25)] hover:scale-[1.02] active:scale-[0.98]'
-                    }`}
+                          ? 'bg-ok/90 text-void shadow-[0_0_40px_rgba(74,222,128,0.2)]'
+                          : isShaking
+                            ? 'bg-grav text-white-pure shadow-[0_0_60px_rgba(124,110,245,0.4)] scale-95'
+                            : 'bg-white-pure text-void hover:shadow-[0_0_60px_rgba(124,110,245,0.25)] hover:scale-[1.02] active:scale-[0.98]'
+                      }`}
                   >
                     {!current ? (
                       <>Нет доступных версий</>

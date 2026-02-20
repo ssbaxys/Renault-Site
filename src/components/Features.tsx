@@ -43,9 +43,9 @@ export function Features() {
       {/* Separator */}
       <div className="section-divider max-w-6xl mx-auto mb-28" />
 
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6 mb-12 sm:mb-16">
           <div>
             <p className="text-[12px] font-mono text-grav-light tracking-[0.2em] uppercase mb-4">
               // Возможности
@@ -61,11 +61,11 @@ export function Features() {
         </div>
 
         {/* Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {features.map((f, i) => (
             <div
               key={i}
-              className="glow-card group relative p-7 rounded-2xl border border-white-8 bg-void-1 hover:bg-void-2 hover:border-white-15 transition-all duration-500"
+              className="glow-card group relative p-5 sm:p-7 rounded-2xl border border-white-8 bg-void-1 hover:bg-void-2 hover:border-white-15 transition-all duration-500"
             >
               <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_50%_0%,rgba(124,110,245,0.04),transparent_60%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -96,11 +96,11 @@ export function Features() {
         </div>
 
         {/* Summary bar */}
-        <div className="mt-8 p-5 rounded-2xl border border-white-8 bg-void-1 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-6 sm:mt-8 p-4 sm:p-5 rounded-2xl border border-white-8 bg-void-1 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-ok animate-pulse" />
-            <span className="text-[13px] text-white-50">
-              Все функции работают на <span className="text-white-70 font-medium">Hypper Sandbox 0.5.0.2</span>
+            <span className="w-2 h-2 rounded-full bg-ok animate-pulse shrink-0" />
+            <span className="text-[12px] sm:text-[13px] text-white-50">
+              Все функции работают на <span className="text-white-70 font-medium whitespace-nowrap">Hypper Sandbox 0.5.0.2</span>
             </span>
           </div>
           <span className="text-[11px] font-mono text-white-15">

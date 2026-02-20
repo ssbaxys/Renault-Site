@@ -30,11 +30,11 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         {/* Title */}
-        <h1 className="animate-fade-in-up stagger-1 font-display font-bold text-[clamp(3rem,9vw,6rem)] leading-[0.92] tracking-tight">
+        <h1 className="animate-fade-in-up stagger-1 font-display font-bold text-[clamp(2.5rem,14vw,6rem)] leading-[0.92] tracking-tight">
           <span className="text-white-pure">Renault</span>
         </h1>
 
-        <p className="animate-fade-in-up stagger-2 mt-5 font-display text-[clamp(1rem,2.5vw,1.4rem)] text-white-30 font-light tracking-wide">
+        <p className="animate-fade-in-up stagger-2 mt-4 md:mt-5 font-display text-[clamp(1.1rem,4.5vw,1.4rem)] text-white-30 font-light tracking-wide">
           Скрипт для Hypper Sandbox
         </p>
 
@@ -49,18 +49,18 @@ export function Hero() {
 
         {/* Description */}
         <p className="animate-fade-in-up stagger-4 mt-8 text-[15px] leading-relaxed text-white-50 max-w-xl mx-auto">
-          Полностью бесплатный скрипт с открытым исходным кодом. 
+          Полностью бесплатный скрипт с открытым исходным кодом.
           AimBot, WallHack, Speed Hack, God Mode — полный контроль через инъекцию в память процесса.
         </p>
 
         {/* CTA */}
-        <div className="animate-fade-in-up stagger-5 mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="animate-fade-in-up stagger-5 mt-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-[280px] sm:max-w-none mx-auto">
           <a
             href="#download"
-            className="group relative px-8 py-3.5 rounded-full bg-white-pure text-void text-[14px] font-semibold transition-all duration-300 hover:shadow-[0_0_40px_rgba(124,110,245,0.25)] hover:scale-[1.02] active:scale-[0.98]"
+            className="group relative px-6 sm:px-8 py-3.5 sm:py-3.5 flex justify-center items-center rounded-full bg-white-pure text-void text-[14px] font-semibold transition-all duration-300 hover:shadow-[0_0_40px_rgba(124,110,245,0.25)] hover:scale-[1.02] active:scale-[0.98]"
           >
             <span className="relative z-10 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4" />
               </svg>
               Скачать бесплатно
@@ -68,23 +68,23 @@ export function Hero() {
           </a>
           <a
             href="#code"
-            className="px-8 py-3.5 rounded-full border border-white-15 text-white-70 text-[14px] font-medium hover:border-white-30 hover:text-white-90 transition-all duration-300"
+            className="px-6 sm:px-8 py-3.5 sm:py-3.5 flex justify-center items-center rounded-full border border-white-15 text-white-70 text-[14px] font-medium hover:border-white-30 hover:text-white-90 transition-all duration-300"
           >
             Смотреть код
           </a>
         </div>
 
         {/* Stats row */}
-        <div className="animate-fade-in-up stagger-6 mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-xl mx-auto">
+        <div className="animate-fade-in-up stagger-6 mt-14 sm:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 w-full max-w-xl mx-auto px-4 sm:px-0">
           {[
             { val: downloads === null ? '—' : formatCount(downloads), label: 'Скачиваний' },
             { val: 'Бесплатно', label: 'Навсегда', small: true },
             { val: '6', label: 'Функций' },
             { val: '24ч', label: 'Обновления' },
           ].map((s) => (
-            <div key={s.label} className="text-center py-3 rounded-xl border border-white-4 bg-white-2">
-              <div className={`font-display font-bold text-white-90 ${'small' in s && s.small ? 'text-sm' : 'text-xl'}`}>{s.val}</div>
-              <div className="mt-1 text-[11px] text-white-30 uppercase tracking-wider">{s.label}</div>
+            <div key={s.label} className="text-center py-3 rounded-xl border border-white-4 bg-white-2 flex flex-col justify-center">
+              <div className={`font-display font-bold text-white-90 ${'small' in s && s.small ? 'text-sm sm:text-md' : 'text-lg sm:text-xl'}`}>{s.val}</div>
+              <div className="mt-1 sm:mt-1.5 text-[10px] sm:text-[11px] text-white-30 uppercase tracking-wider">{s.label}</div>
             </div>
           ))}
         </div>

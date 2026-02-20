@@ -89,10 +89,10 @@ export function Changelog() {
 
   return (
     <section id="changelog" className="relative py-28 z-[1]">
-      <div className="section-divider max-w-6xl mx-auto mb-28" />
+      <div className="section-divider max-w-6xl mx-auto mb-16 md:mb-28" />
 
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6 mb-12 sm:mb-16">
           <div>
             <p className="text-[12px] font-mono text-grav-light tracking-[0.2em] uppercase mb-4">
               // Changelog
@@ -132,11 +132,10 @@ export function Changelog() {
 
                 return (
                   <div key={vi} className={`relative pl-8 md:pl-10 ${isAnnounce ? 'opacity-80' : ''}`}>
-                    <div className={`absolute left-0 top-1.5 w-[15px] h-[15px] rounded-full border-2 ${
-                      isLatest ? 'border-grav bg-grav/20'
-                      : isAnnounce ? 'border-sky-400/30 bg-sky-400/10'
-                      : 'border-white-15 bg-void'
-                    }`}>
+                    <div className={`absolute left-0 top-1.5 w-[15px] h-[15px] rounded-full border-2 ${isLatest ? 'border-grav bg-grav/20'
+                        : isAnnounce ? 'border-sky-400/30 bg-sky-400/10'
+                          : 'border-white-15 bg-void'
+                      }`}>
                       {isLatest && <div className="absolute inset-[3px] rounded-full bg-grav animate-pulse" />}
                     </div>
 
@@ -159,11 +158,10 @@ export function Changelog() {
                         <button
                           onClick={() => handleDownloadVersion(v, vi)}
                           disabled={isDownloading}
-                          className={`ml-auto flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-mono border transition-all ${
-                            isDownloading
+                          className={`mt-2 sm:mt-0 ml-0 sm:ml-auto w-full sm:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-1 rounded-lg text-[11px] sm:text-[11px] font-mono border transition-all ${isDownloading
                               ? 'border-ok/20 text-ok/60 bg-ok/5'
                               : 'border-white-8 text-white-30 hover:text-white-70 hover:border-white-15 hover:bg-white-4'
-                          }`}
+                            }`}
                         >
                           {isDownloading ? (
                             <>
